@@ -29,7 +29,7 @@ class IHealthService:
         pass
 
 
-class HealthService:
+class HealthService(IHealthService):
     def __init__(self, repository: Optional[IHealthRepository] = None):
         self.repository = repository or HealthRepository()
 
