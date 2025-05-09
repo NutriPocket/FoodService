@@ -1,10 +1,10 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Any, Optional
 from sqlalchemy import Engine, Executable, text
 from database.database import engine
 
 
-class IHealthRepository:
+class IHealthRepository(metaclass=ABCMeta):
     @abstractmethod
     def get_health(self) -> dict[Any, Any]:
         pass

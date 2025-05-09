@@ -1,11 +1,11 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.health import Health, HealthDB
 from repository.health_repository import HealthRepository, IHealthRepository
 
 
-class IHealthService:
+class IHealthService(metaclass=ABCMeta):
     @abstractmethod
     def get_health(self) -> Health:
         """
