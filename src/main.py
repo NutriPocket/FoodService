@@ -10,7 +10,7 @@ from middleware.auth_middleware import JWTMiddleware
 from middleware.error_handler import error_handler
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from routes import health_routes
+from routes import health_routes, food_routes
 
 app = FastAPI()
 
@@ -33,7 +33,7 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=JWTMiddleware())
 
 
 app.include_router(health_routes.router, prefix="/health", tags=["health"])
-
+app.include_router(food_routes.router, prefix="/food", tags=["food"])
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
