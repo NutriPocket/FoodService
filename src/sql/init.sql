@@ -39,3 +39,10 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
     FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES plans(id_plan) ON DELETE CASCADE
 );
+
+-- Create table 'usuarios'
+CREATE TABLE IF NOT EXISTS users (
+    id_user SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    id_plan INTEGER REFERENCES plans(id_plan) ON DELETE SET NULL
+);

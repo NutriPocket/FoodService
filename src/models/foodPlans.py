@@ -18,3 +18,8 @@ class Food(BaseModel):
     description: str
     price: float
     created_at: datetime
+
+class Users(BaseModel):
+    id: int
+    name: str
+    id_plan: int
