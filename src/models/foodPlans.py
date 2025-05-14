@@ -5,7 +5,7 @@ from datetime import datetime
 class Plans(BaseModel):
     id_plan: int
     title: str
-    planDescription: str
+    plan_description: str
     objetive: str
 
 class FoodPlanLink(BaseModel):

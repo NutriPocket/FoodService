@@ -1,6 +1,7 @@
 from typing import Optional
 from fastapi import status
 from fastapi.responses import JSONResponse
+from sqlalchemy import Engine, Executable, text
 from database.database import engine
 
 from service.food_service import FoodService, IFoodService
@@ -12,32 +13,32 @@ class FoodController:
 
     def get_plans(self):
         with self.engine.connect() as connection:
-            result = connection.execute(text("SELECT id_plan, title, planDescription, objetive FROM plans"))
+            result = connection.execute(text("SELECT id_plan, title, plan_description, objetive FROM plans"))
             plans = []
-            for row in result:
+            for fila in result:
                 plan = {
                     "id_plan": row.id_plan,
                     "title": row.title,
-                    "planDescription": row.planDescription,
+                    "plan_description": row.plan_description,
                     "objetive": row.objetive,
                 }
                 plans.append(plan)
             return {"plans":plans}
 
-    def get_plan(self, aId):
+    def get_plan(self, aId) -> Plans:
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"SELECT id_plan, title, planDescription, objetive FROM plans WHERE id_plan={aId}"))
+            result = connection.execute(text(f"SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan={aId}"))
             plan = result.fetchone()
             if plan:
                 plan_json = {
                     "id_plan": plan.id_plan,
                     "title": plan.title,
-                    "planDescription": plan.planDescription,
+                    "plan_description": plan.plan_description,
                     "objetive": plan.objetive,
                 }
-                return plan_json
+                return Plans(**plan_json)
             else:
-                return {"message": "Plan not found"}
+                return Plans()
 
     def get_user_plan(self, aUser):
         # ACA hay que revisar como se implemento users
@@ -45,5 +46,5 @@ class FoodController:
 
     def add_plan(self, aTitle, aDescription, aObjetive):
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"INSERT INTO plans(title, planDescription, objetive) VALUES ('{aTitle}','{aDescription}', '{aObjetive}')"))
+            result = connection.execute(text(f"INSERT INTO plans(title, plan_description, objetive) VALUES ('{aTitle}','{aDescription}', '{aObjetive}')"))
             connection.commit()    

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS foods (
 CREATE TABLE IF NOT EXISTS plans (
     id_plan SERIAL PRIMARY KEY,
     title VARCHAR(255),
-    planDescription TEXT,
+    plan_description VARCHAR(255),
     objetive VARCHAR(255)
 );
 
