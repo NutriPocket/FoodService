@@ -10,8 +10,8 @@ router = APIRouter()
     summary="get the differents plans",
     status_code=status.HTTP_200_OK
 )
-def get_food_plans() -> Plans:
-    return FoodController().get_food_plans()
+def get_food_plans() -> dict:
+    return FoodController().get_plans()
 
 @router.get(
     "/plans/{aId}",
@@ -22,9 +22,9 @@ def get_plan_by_id(aId:int) -> Plans:
     return FoodController().get_plan(aId)
 
 @router.post(
-    "/plans/{aId}/{aTitle}/{aDescription}/{aObjetive}",
+    "/plans/{aTitle}/{aDescription}/{aObjetive}",
     summary="post a plan in db",
     status_code=status.HTTP_200_OK
 )
-def post_plan(aId:int, aTitle:str, aDescription:str, aObjetive:str) -> None:
-    return FoodController().add_plan(aId, aTitle, aDescription, aObjetive)
+def post_plan(aTitle:str, aDescription:str, aObjetive:str) -> None:
+    return FoodController().add_plan(aTitle, aDescription, aObjetive)

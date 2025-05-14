@@ -43,7 +43,7 @@ class FoodController:
         # ACA hay que revisar como se implemento users
         pass
 
-    def add_plan(self, aId, aTitle, aDescription, aObjetive):
+    def add_plan(self, aTitle, aDescription, aObjetive):
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"INSERT INTO plans(id_plan, title, planDescription, objetive) VALUES ('{aTitle}','{aDescription}', '{aObjetive}')"))
+            result = connection.execute(text(f"INSERT INTO plans(title, planDescription, objetive) VALUES ('{aTitle}','{aDescription}', '{aObjetive}')"))
             connection.commit()    
