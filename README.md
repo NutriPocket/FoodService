@@ -18,8 +18,3 @@ docker-compose up database # Run postgresql
 docker-compose down # Down services
 docker-compose down --volumes # Removes services and volumes (postgresql persisted data)
 ```
-
-# Otros
-- Si estan en Windows entren a requirements.txt y eliminen la linea de "uvloop==0.21.0"
-- Luego de activar el entorno e instalar las dependencias se posicionan dentro de 'src'
-- Levantan con 'uvicorn main:app --reload'
