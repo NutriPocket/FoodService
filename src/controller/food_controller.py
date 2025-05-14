@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from database.database import engine
 
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Plans
+from models.foodPlans import Plans, Food, FoodPlanLink
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
