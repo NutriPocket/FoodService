@@ -1,5 +1,6 @@
 import logging
 from os import getenv
+import os
 import dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +13,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from routes import health_routes, food_routes
 
-dotenv.load_dotenv()
 app = FastAPI()
 
 
@@ -44,8 +44,12 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s - %(asctime)s', filename='logs.log')
 
+    env_path: str = getenv("ENV_PATH", "../.env")
+    env_path = os.path.abspath(env_path)
 
-    HOST: str = getenv("HOST") or "0.0.0.0"
-    PORT: int = int(getenv("PORT") or 8080)
+    dotenv.load_dotenv(env_path)
+
+    HOST: str = getenv("HOST", "0.0.0.0")
+    PORT: int = int(getenv("PORT", 8080))
 
     uvicorn.run(app, host=HOST, port=PORT)
