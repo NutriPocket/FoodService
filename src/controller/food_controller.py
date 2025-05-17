@@ -5,7 +5,7 @@ from sqlalchemy import Engine, Executable, text
 from database.database import engine
 
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Plans, Food, FoodPlanLink, Users
+from models.foodPlans import Plans, Food, PlanAssigment, Users
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
@@ -70,8 +70,28 @@ class FoodController:
             result = connection.execute(text(f"INSERT INTO users(name) VALUES ('{username}')"))
             connection.commit()
     
-    def post_user_plan(self, userId, planId) -> None:
+    def put_user_plan(self, userId, planId) -> None:
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"UPDATE users SET id_plan={planId} WHERE id_user={userId}"))
-            connection.commit()
-        
+            print("put user plan")
+            print(userId)
+            print(planId)
+
+            # Verificar si exl usuario existe
+            result = connection.execute(
+                text("SELECT id_user FROM users WHERE id_user = :userId"),
+                {"userId": userId}
+            )
+            user = result.fetchone()
+            if user:
+                # Si existe, actualizar el plan
+                connection.execute(
+                    text("UPDATE users SET id_plan = :planId WHERE id_user = :userId"),
+                    {"planId": planId, "userId": userId}
+                )
+            else:
+                # Si no existe, crear el usuario con ese plan
+                connection.execute(
+                    text("INSERT INTO users (id_user, id_plan) VALUES (:userId, :planId)"),
+                    {"userId": userId, "planId": planId}
+                )
+        connection.commit()

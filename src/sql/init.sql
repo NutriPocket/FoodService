@@ -31,6 +31,40 @@ CREATE TABLE IF NOT EXISTS plans (
     objetive VARCHAR(255)
 );
 
+-- Load data into 'foods' table
+INSERT INTO plans (id_plan, title, plan_description, objetive) VALUES
+    (
+        1,
+        'Plan Subir de Peso',
+        'Plan diseñado para personas que desean aumentar su peso corporal de manera saludable, priorizando alimentos calóricos y nutritivos.',
+        'Subir de peso'
+    ),
+    (
+        2,
+        'Plan Bajar de Peso',
+        'Plan enfocado en la reducción de peso corporal mediante un déficit calórico y selección de alimentos bajos en grasas y azúcares.',
+        'Bajar de peso'
+    ),
+    (
+        3,
+        'Plan Aumentar Masa Muscular',
+        'Plan orientado a quienes buscan incrementar su masa muscular, con alto contenido proteico y distribución adecuada de carbohidratos y grasas.',
+        'Aumentar masa muscular'
+    ),
+    (
+        4,
+        'Plan Bajar Grasa Corporal',
+        'Plan para reducir el porcentaje de grasa corporal, priorizando alimentos magros, vegetales y controlando la ingesta calórica.',
+        'Bajar grasa corporal'
+    ),
+    (
+        5,
+        'Plan Mantenimiento',
+        'Plan equilibrado para mantener el peso y la composición corporal actual, con variedad de alimentos y control de porciones.',
+        'Mantener peso'
+    );
+    
+
 -- Create table 'foodplanlink'
 CREATE TABLE IF NOT EXISTS foodplanlink (
     food_id INTEGER NOT NULL,
@@ -42,7 +76,6 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
 
 -- Create table 'usuarios'
 CREATE TABLE IF NOT EXISTS users (
-    id_user SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    id_user VARCHAR(36) PRIMARY KEY,
     id_plan INTEGER REFERENCES plans(id_plan) ON DELETE SET NULL
 );

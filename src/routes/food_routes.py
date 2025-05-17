@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from controller.food_controller import FoodController
-from models.foodPlans import Plans, Food, FoodPlanLink, Users
+from models.foodPlans import Plans, Food, PlanAssigment, Users
 
 router = APIRouter()
 
@@ -45,10 +45,12 @@ def get_user_plan(userId:int) -> Plans:
 def post_user(username:str) -> None:
     return FoodController().post_user(username)
 
-@router.post(
-    "/user/{userId}/{planId}",
+@router.put(
+    "/users/{userId}/plan",
     summary="set a plan in a user",
     status_code=status.HTTP_200_OK
 )
-def post_user_plan(userId:int, planId:int) -> None:
-    return FoodController().post_user_plan(userId, planId)
+def put_user_plan(userId: str, assigment: PlanAssigment) -> None:
+    planId = assigment.plan_id
+    
+    return FoodController().put_user_plan(userId, planId)
