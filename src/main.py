@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from routes import health_routes, food_routes
 
+dotenv.load_dotenv()
 app = FastAPI()
 
 
@@ -43,7 +44,6 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s - %(asctime)s', filename='logs.log')
 
-    dotenv.load_dotenv()
 
     HOST: str = getenv("HOST") or "0.0.0.0"
     PORT: int = int(getenv("PORT") or 8080)
