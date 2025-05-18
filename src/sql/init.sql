@@ -50,34 +50,29 @@ CREATE TABLE IF NOT EXISTS plans (
     objetive VARCHAR(255)
 );
 
--- Load data into 'foods' table
-INSERT INTO plans (id_plan, title, plan_description, objetive) VALUES
+-- Load data into 'plans' table
+INSERT INTO plans (title, plan_description, objetive) VALUES
     (
-        1,
         'Subir de Peso',
         'Plan diseñado para personas que desean aumentar su peso corporal de manera saludable, priorizando alimentos calóricos y nutritivos.',
         'Subir de peso'
     ),
     (
-        2,
         'Bajar de Peso',
         'Plan enfocado en la reducción de peso corporal mediante un déficit calórico y selección de alimentos bajos en grasas y azúcares.',
         'Bajar de peso'
     ),
     (
-        3,
         'Aumentar Masa Muscular',
         'Plan orientado a quienes buscan incrementar su masa muscular, con alto contenido proteico y distribución adecuada de carbohidratos y grasas.',
         'Aumentar masa muscular'
     ),
     (
-        4,
         'Bajar Grasa Corporal',
         'Plan para reducir el porcentaje de grasa corporal, priorizando alimentos magros, vegetales y controlando la ingesta calórica.',
         'Bajar grasa corporal'
     ),
     (
-        5,
         'Mantenimiento',
         'Plan equilibrado para mantener el peso y la composición corporal actual, con variedad de alimentos y control de porciones.',
         'Mantener peso'
