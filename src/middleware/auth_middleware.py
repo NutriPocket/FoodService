@@ -14,6 +14,8 @@ class JWTMiddleware:
             "/redoc",
             "/openapi.json",
             "/favicon.ico",
+            "/food",
+            "/plans"
         ]
 
     async def __call__(self, request: Request, call_next):
