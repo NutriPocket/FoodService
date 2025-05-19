@@ -74,4 +74,92 @@ class FoodController:
         with self.engine.connect() as connection:
             result = connection.execute(text(f"UPDATE users SET id_plan={planId} WHERE id_user={userId}"))
             connection.commit()
-        
+
+    def get_foods_from_plan(self, plan_id: int):
+        with self.engine.connect() as connection:
+            result = connection.execute(text(
+                f"""
+                SELECT f.id, f.name, f.description, f.price, f.created_at
+                FROM foodplanlink fpl
+                JOIN foods f ON fpl.food_id = f.id
+                WHERE fpl.plan_id = {plan_id}
+                """
+            ))
+
+            foods = []
+            for row in result:
+                foods.append({
+                    "id": row.id,
+                    "name": row.name,
+                    "description": row.description,
+                    "price": float(row.price),
+                    "created_at": str(row.created_at),
+                })
+
+            return {"foods": foods}
+
+    def get_foods_from_user_plan(self, user_id: int):
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(
+                f"SELECT id_plan FROM users WHERE id_user = {user_id}"
+            ))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                return {"foods": []}
+
+            plan_id = user.id_plan
+
+            foods_result = connection.execute(text(
+                f"""
+                SELECT f.id, f.name, f.description, f.price, f.created_at
+                FROM foodplanlink fpl
+                JOIN foods f ON fpl.food_id = f.id
+                WHERE fpl.plan_id = {plan_id}
+                """
+            ))
+
+            foods = []
+            for row in foods_result:
+                foods.append({
+                    "id": row.id,
+                    "name": row.name,
+                    "description": row.description,
+                    "price": float(row.price),
+                    "created_at": str(row.created_at),
+                })
+
+            return {"foods": foods}
+
+
+    def add_food_to_user_plan(self, userId: int, foodId: int) -> None:
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                raise Exception("User or user's plan not found")
+
+            planId = user.id_plan
+
+            existing = connection.execute(text(
+                f"SELECT 1 FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
+            )).fetchone()
+
+            if not existing:
+                connection.execute(text(
+                    f"INSERT INTO foodplanlink(food_id, plan_id) VALUES ({foodId}, {planId})"
+                ))
+                connection.commit()
+
+    def remove_food_from_user_plan(self, userId: int, foodId: int) -> None:
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                raise Exception("User or user's plan not found")
+
+            planId = user.id_plan
+
+            connection.execute(text(
+                f"DELETE FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
+            ))
+            connection.commit()

@@ -23,6 +23,13 @@ CREATE TABLE IF NOT EXISTS foods (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+INSERT INTO foods (name, description, price)
+VALUES 
+  ('Grilled Chicken', 'Lean protein with herbs', 7.99),
+  ('Brown Rice', 'Whole grain rice', 2.50),
+  ('Broccoli', 'Steamed green broccoli', 1.75);
+
+
 -- Create table 'plans'
 CREATE TABLE IF NOT EXISTS plans (
     id_plan SERIAL PRIMARY KEY,
@@ -30,6 +37,24 @@ CREATE TABLE IF NOT EXISTS plans (
     plan_description VARCHAR(255),
     objetive VARCHAR(255)
 );
+
+INSERT INTO plans (title, plan_description, objetive)
+VALUES
+  ('Weight Loss Plan', 'Low-calorie meals', 'Lose weight'),
+  ('Muscle Gain Plan', 'High protein meals', 'Gain muscle');
+
+-- Create table 'usuarios'
+CREATE TABLE IF NOT EXISTS users (
+    id_user SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    id_plan INTEGER REFERENCES plans(id_plan) ON DELETE SET NULL
+);
+
+INSERT INTO users (name, id_plan)
+VALUES
+  ('Alice', 1),
+  ('Bob', 2);
+
 
 -- Create table 'foodplanlink'
 CREATE TABLE IF NOT EXISTS foodplanlink (
@@ -40,9 +65,3 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
     FOREIGN KEY (plan_id) REFERENCES plans(id_plan) ON DELETE CASCADE
 );
 
--- Create table 'usuarios'
-CREATE TABLE IF NOT EXISTS users (
-    id_user SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    id_plan INTEGER REFERENCES plans(id_plan) ON DELETE SET NULL
-);
