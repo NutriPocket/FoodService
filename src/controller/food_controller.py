@@ -5,7 +5,7 @@ from sqlalchemy import Engine, Executable, text
 from database.database import engine
 
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Plans, Food, FoodPlanLink, Users
+from models.foodPlans import Plans, Food, PlanAssigment, Users
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
@@ -48,10 +48,11 @@ class FoodController:
 
     def get_user_plan(self, userId) -> Plans:
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"SELECT id_user, name, id_plan FROM users WHERE id_user={userId}"))
+            result = connection.execute(text(f"SELECT id_user, id_plan FROM users WHERE id_user='{userId}'"))
+            
             user = result.fetchone()
             idPlan = user.id_plan
-            print(idPlan)
+            
             result = connection.execute(text(f"SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan={idPlan}"))
             plan = result.fetchone()
             if plan:
@@ -70,8 +71,120 @@ class FoodController:
             result = connection.execute(text(f"INSERT INTO users(name) VALUES ('{username}')"))
             connection.commit()
     
-    def post_user_plan(self, userId, planId) -> None:
+    def put_user_plan(self, userId, planId) -> None:
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"UPDATE users SET id_plan={planId} WHERE id_user={userId}"))
+            print("put user plan")
+            print(userId)
+            print(planId)
+
+            # Verificar si exl usuario existe
+            result = connection.execute(
+                text("SELECT id_user FROM users WHERE id_user = :userId"),
+                {"userId": userId}
+            )
+            user = result.fetchone()
+            if user:
+                # Si existe, actualizar el plan
+                print("entra a actualizar el plan")
+                connection.execute(
+                    text("UPDATE users SET id_plan = :planId WHERE id_user = :userId"),
+                    {"planId": planId, "userId": userId}
+                )
+            else:
+                # Si no existe, crear el usuario con ese plan
+                print("entra a crear un nuevo usuario")
+                connection.execute(
+                    text("INSERT INTO users (id_user, id_plan) VALUES (:userId, :planId)"),
+                    {"userId": userId, "planId": planId}
+                )
             connection.commit()
-        
+
+    def get_foods_from_plan(self, plan_id: int):
+        with self.engine.connect() as connection:
+            result = connection.execute(text(
+                f"""
+                SELECT f.id, f.name, f.description, f.price, f.created_at
+                FROM foodplanlink fpl
+                JOIN foods f ON fpl.food_id = f.id
+                WHERE fpl.plan_id = {plan_id}
+                """
+            ))
+
+            foods = []
+            for row in result:
+                foods.append({
+                    "id": row.id,
+                    "name": row.name,
+                    "description": row.description,
+                    "price": float(row.price),
+                    "created_at": str(row.created_at),
+                })
+
+            return {"foods": foods}
+
+    def get_foods_from_user_plan(self, user_id: str):
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(
+                f"SELECT id_plan FROM users WHERE id_user = '{user_id}'"
+            ))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                return {"foods": []}
+
+            plan_id = user.id_plan
+
+            foods_result = connection.execute(text(
+                f"""
+                SELECT f.id, f.name, f.description, f.price, f.created_at
+                FROM foodplanlink fpl
+                JOIN foods f ON fpl.food_id = f.id
+                WHERE fpl.plan_id = {plan_id}
+                """
+            ))
+
+            foods = []
+            for row in foods_result:
+                foods.append({
+                    "id": row.id,
+                    "name": row.name,
+                    "description": row.description,
+                    "price": float(row.price),
+                    "created_at": str(row.created_at),
+                })
+            print(foods)
+
+            return {"foods": foods}
+
+
+    def add_food_to_user_plan(self, userId: int, foodId: int) -> None:
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                raise Exception("User or user's plan not found")
+
+            planId = user.id_plan
+
+            existing = connection.execute(text(
+                f"SELECT 1 FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
+            )).fetchone()
+
+            if not existing:
+                connection.execute(text(
+                    f"INSERT INTO foodplanlink(food_id, plan_id) VALUES ({foodId}, {planId})"
+                ))
+                connection.commit()
+
+    def remove_food_from_user_plan(self, userId: int, foodId: int) -> None:
+        with self.engine.connect() as connection:
+            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
+            user = user_result.fetchone()
+            if not user or user.id_plan is None:
+                raise Exception("User or user's plan not found")
+
+            planId = user.id_plan
+
+            connection.execute(text(
+                f"DELETE FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
+            ))
+            connection.commit()

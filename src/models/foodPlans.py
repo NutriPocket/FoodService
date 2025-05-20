@@ -8,8 +8,7 @@ class Plans(BaseModel):
     plan_description: str
     objetive: str
 
-class FoodPlanLink(BaseModel):
-    food_id: int
+class PlanAssigment(BaseModel):
     plan_id: int
 
 class Food(BaseModel):
