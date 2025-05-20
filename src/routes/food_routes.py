@@ -34,7 +34,7 @@ def post_plan(aTitle:str, aDescription:str, aObjetive:str) -> None:
     summary="get the user plan",
     status_code=status.HTTP_200_OK
 )
-def get_user_plan(userId:int) -> Plans:
+def get_user_plan(userId:str) -> Plans:
     return FoodController().get_user_plan(userId)
 
 @router.post(
@@ -52,6 +52,7 @@ def post_user(username:str) -> None:
 )
 def put_user_plan(userId: str, assigment: PlanAssigment) -> None:
     planId = assigment.plan_id
+    print(f"planId: {planId}")
     return FoodController().put_user_plan(userId, planId)
 
 
@@ -72,7 +73,7 @@ def get_foods_from_plan(planId: int):
     summary="Get all foods from a user's plan",
     status_code=status.HTTP_200_OK
 )
-def get_foods_from_user_plan(userId: int):
+def get_foods_from_user_plan(userId: str):
     return FoodController().get_foods_from_user_plan(userId)
 
 @router.post(

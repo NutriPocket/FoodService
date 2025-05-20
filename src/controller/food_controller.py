@@ -48,10 +48,11 @@ class FoodController:
 
     def get_user_plan(self, userId) -> Plans:
         with self.engine.connect() as connection:
-            result = connection.execute(text(f"SELECT id_user, name, id_plan FROM users WHERE id_user={userId}"))
+            result = connection.execute(text(f"SELECT id_user, id_plan FROM users WHERE id_user='{userId}'"))
+            
             user = result.fetchone()
             idPlan = user.id_plan
-            print(idPlan)
+            
             result = connection.execute(text(f"SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan={idPlan}"))
             plan = result.fetchone()
             if plan:
@@ -84,16 +85,19 @@ class FoodController:
             user = result.fetchone()
             if user:
                 # Si existe, actualizar el plan
+                print("entra a actualizar el plan")
                 connection.execute(
                     text("UPDATE users SET id_plan = :planId WHERE id_user = :userId"),
                     {"planId": planId, "userId": userId}
                 )
             else:
                 # Si no existe, crear el usuario con ese plan
+                print("entra a crear un nuevo usuario")
                 connection.execute(
                     text("INSERT INTO users (id_user, id_plan) VALUES (:userId, :planId)"),
                     {"userId": userId, "planId": planId}
                 )
+            connection.commit()
 
     def get_foods_from_plan(self, plan_id: int):
         with self.engine.connect() as connection:
@@ -118,10 +122,10 @@ class FoodController:
 
             return {"foods": foods}
 
-    def get_foods_from_user_plan(self, user_id: int):
+    def get_foods_from_user_plan(self, user_id: str):
         with self.engine.connect() as connection:
             user_result = connection.execute(text(
-                f"SELECT id_plan FROM users WHERE id_user = {user_id}"
+                f"SELECT id_plan FROM users WHERE id_user = '{user_id}'"
             ))
             user = user_result.fetchone()
             if not user or user.id_plan is None:
@@ -147,6 +151,7 @@ class FoodController:
                     "price": float(row.price),
                     "created_at": str(row.created_at),
                 })
+            print(foods)
 
             return {"foods": foods}
 
