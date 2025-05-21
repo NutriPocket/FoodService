@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from controller.food_controller import FoodController
-from models.foodPlans import Plans, Food, PlanAssigment, Users
+from models.foodPlans import FoodPreferenceRequest, Plans, Food, PlanAssigment, Users
 
 router = APIRouter()
 
@@ -91,3 +91,11 @@ def add_food_to_user_plan(userId: int, foodId: int) -> None:
 )
 def remove_food_from_user_plan(userId: int, foodId: int) -> None:
     return FoodController().remove_food_from_user_plan(userId, foodId)
+
+@router.post(
+    "/plans/fromPreferences",
+    summary="Create a new plan based on user food preferences",
+    status_code=status.HTTP_201_CREATED
+)
+def create_plan_from_preferences(data: FoodPreferenceRequest) -> Plans:
+    return FoodController().create_plan_from_preferences(data.user_id, data.preferences)
