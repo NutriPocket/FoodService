@@ -170,3 +170,15 @@ BEGIN
             (2, day_id, 4, 4);   -- Cena
     END LOOP;
 END$$;
+
+-- Link foods used in Plan 1 (Subir de Peso)
+INSERT INTO foodplanlink (food_id, plan_id) VALUES
+(1, 1),  -- Pasta con salsa cremosa
+(2, 1);  -- Batido de frutas y avena
+
+-- Link foods used in Plan 2 (Bajar de Peso)
+INSERT INTO foodplanlink (food_id, plan_id) VALUES
+(3, 2),   -- Ensalada de pollo
+(4, 2),   -- Sopa de verduras
+(6, 2),   -- Omelette de claras
+(10, 2);  -- Wrap integral de pavo
