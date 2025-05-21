@@ -106,3 +106,24 @@ CREATE TABLE IF NOT EXISTS users (
     id_user VARCHAR(36) PRIMARY KEY,
     id_plan INTEGER REFERENCES plans(id_plan) ON DELETE SET NULL
 );
+
+-- Create table for meal moments
+CREATE TABLE IF NOT EXISTS meal_moments (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
+-- Insert standard meal moments
+INSERT INTO meal_moments (name) VALUES
+('Desayuno'),
+('Almuerzo'),
+('Merienda'),
+('Cena')
+ON CONFLICT DO NOTHING;
+
+-- Create join table for many-to-many relation between foods and meal moments
+CREATE TABLE IF NOT EXISTS food_meal_moments (
+    food_id INTEGER NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+    meal_moment_id INTEGER NOT NULL REFERENCES meal_moments(id) ON DELETE CASCADE,
+    PRIMARY KEY (food_id, meal_moment_id)
+);
