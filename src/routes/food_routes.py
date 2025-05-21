@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from controller.food_controller import FoodController
-from models.foodPlans import FoodPreferenceRequest, Plans, Food, PlanAssigment, Users
+from models.foodPlans import FoodPreferenceRequest, Plan, Plans, Food, PlanAssigment, Users
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ def get_food_plans() -> dict:
     summary="get a specific plan",
     status_code=status.HTTP_200_OK
 )
-def get_plan_by_id(aId:int) -> Plans:
+def get_plan_by_id(aId:int) -> Plan:
     return FoodController().get_plan(aId)
 
 @router.post(

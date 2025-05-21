@@ -50,35 +50,6 @@ CREATE TABLE IF NOT EXISTS plans (
     objetive VARCHAR(255)
 );
 
--- Load data into 'plans' table
-INSERT INTO plans (title, plan_description, objetive) VALUES
-    (
-        'Subir de Peso',
-        'Plan diseñado para personas que desean aumentar su peso corporal de manera saludable, priorizando alimentos calóricos y nutritivos.',
-        'Subir de peso'
-    ),
-    (
-        'Bajar de Peso',
-        'Plan enfocado en la reducción de peso corporal mediante un déficit calórico y selección de alimentos bajos en grasas y azúcares.',
-        'Bajar de peso'
-    ),
-    (
-        'Aumentar Masa Muscular',
-        'Plan orientado a quienes buscan incrementar su masa muscular, con alto contenido proteico y distribución adecuada de carbohidratos y grasas.',
-        'Aumentar masa muscular'
-    ),
-    (
-        'Bajar Grasa Corporal',
-        'Plan para reducir el porcentaje de grasa corporal, priorizando alimentos magros, vegetales y controlando la ingesta calórica.',
-        'Bajar grasa corporal'
-    ),
-    (
-        'Mantenimiento',
-        'Plan equilibrado para mantener el peso y la composición corporal actual, con variedad de alimentos y control de porciones.',
-        'Mantener peso'
-    );
-    
-
 -- Create table 'foodplanlink'
 CREATE TABLE IF NOT EXISTS foodplanlink (
     food_id INTEGER NOT NULL,
@@ -87,19 +58,6 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
     FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES plans(id_plan) ON DELETE CASCADE
 );
-
--- Relacionar comidas con planes
-INSERT INTO foodplanlink (food_id, plan_id) VALUES
-    -- Subir de Peso
-    (1, 1), (2, 1),
-    -- Bajar de Peso
-    (3, 2), (4, 2),
-    -- Aumentar Masa Muscular
-    (5, 3), (6, 3),
-    -- Bajar Grasa Corporal
-    (7, 4), (8, 4),
-    -- Mantenimiento
-    (9, 5), (10, 5); 
 
 -- Create table 'usuarios'
 CREATE TABLE IF NOT EXISTS users (
@@ -143,3 +101,72 @@ CREATE TABLE IF NOT EXISTS weekly_meal_plan_food (
     meal_moment_id INTEGER NOT NULL REFERENCES meal_moments(id),
     food_id INTEGER NOT NULL REFERENCES foods(id)
 );
+
+
+-- Table: food_meal_moments (assumes columns: food_id, meal_moment_id)
+-- Format: INSERT INTO food_meal_moments (food_id, meal_moment_id) VALUES (..., ...);
+
+INSERT INTO food_meal_moments (food_id, meal_moment_id) VALUES
+(1, 2),  -- Pasta con salsa cremosa -> Almuerzo
+(1, 4),  -- Pasta con salsa cremosa -> Cena
+(2, 1),  -- Batido de frutas y avena -> Desayuno
+(2, 3),  -- Batido de frutas y avena -> Merienda
+(3, 2),  -- Ensalada de pollo -> Almuerzo
+(4, 4),  -- Sopa de verduras -> Cena
+(5, 2),  -- Pechuga de pollo con arroz integral -> Almuerzo
+(5, 4),  -- Pechuga de pollo con arroz integral -> Cena
+(6, 1),  -- Omelette de claras -> Desayuno
+(7, 4),  -- Pescado al vapor con brócoli -> Cena
+(8, 2),  -- Ensalada de atún -> Almuerzo
+(9, 2),  -- Pollo grillado con quinoa -> Almuerzo
+(10, 3); -- Wrap integral de pavo -> Merienda
+
+-- Inserting mock plans
+
+INSERT INTO plans (id_plan, title, plan_description, objetive)
+VALUES (1, 'Plan Subir de Peso', 'Plan nutricional diseñado para ganar masa.', 'Ganar peso de forma saludable');
+
+-- Assign meals to each day
+
+-- Desayuno: Batido de frutas y avena (id=2)
+-- Almuerzo: Pasta con salsa cremosa (id=1)
+-- Merienda: Batido de frutas y avena (id=2)
+-- Cena: Pasta con salsa cremosa (id=1)
+
+DO $$
+DECLARE
+    day_id INTEGER;
+BEGIN
+    FOR day_id IN 1..7 LOOP
+        INSERT INTO weekly_meal_plan_food (plan_id, day_id, meal_moment_id, food_id)
+        VALUES
+            (1, day_id, 1, 2),  -- Desayuno
+            (1, day_id, 2, 1),  -- Almuerzo
+            (1, day_id, 3, 2),  -- Merienda
+            (1, day_id, 4, 1);  -- Cena
+    END LOOP;
+END$$;
+
+INSERT INTO plans (id_plan, title, plan_description, objetive)
+VALUES (2, 'Plan Bajar de Peso', 'Plan balanceado para reducir grasa corporal.', 'Pérdida de peso');
+
+-- Assign meals to each day
+
+-- Desayuno: Omelette de claras (id=6)
+-- Almuerzo: Ensalada de pollo (id=3)
+-- Merienda: Wrap integral de pavo (id=10)
+-- Cena: Sopa de verduras (id=4)
+
+DO $$
+DECLARE
+    day_id INTEGER;
+BEGIN
+    FOR day_id IN 1..7 LOOP
+        INSERT INTO weekly_meal_plan_food (plan_id, day_id, meal_moment_id, food_id)
+        VALUES
+            (2, day_id, 1, 6),   -- Desayuno
+            (2, day_id, 2, 3),   -- Almuerzo
+            (2, day_id, 3, 10),  -- Merienda
+            (2, day_id, 4, 4);   -- Cena
+    END LOOP;
+END$$;
