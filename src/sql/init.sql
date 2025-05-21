@@ -127,3 +127,19 @@ CREATE TABLE IF NOT EXISTS food_meal_moments (
     meal_moment_id INTEGER NOT NULL REFERENCES meal_moments(id) ON DELETE CASCADE,
     PRIMARY KEY (food_id, meal_moment_id)
 );
+
+CREATE TABLE IF NOT EXISTS week_days (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(20) NOT NULL UNIQUE
+);
+
+INSERT INTO week_days (name) VALUES
+('Lunes'), ('Martes'), ('Miércoles'), ('Jueves'), ('Viernes'), ('Sábado'), ('Domingo');
+
+CREATE TABLE IF NOT EXISTS weekly_meal_plan_food (
+    id SERIAL PRIMARY KEY,
+    plan_id INTEGER NOT NULL REFERENCES plans(id_plan) ON DELETE CASCADE,
+    day_id INTEGER NOT NULL REFERENCES week_days(id),
+    meal_moment_id INTEGER NOT NULL REFERENCES meal_moments(id),
+    food_id INTEGER NOT NULL REFERENCES foods(id)
+);
