@@ -1,3 +1,4 @@
+from http.client import HTTPException
 from typing import Optional
 from fastapi import status
 from fastapi.responses import JSONResponse
@@ -29,7 +30,6 @@ class FoodController:
 
     def get_plan(self, plan_id: int):
         with self.engine.connect() as connection:
-            # 1. Get plan data
             plan = connection.execute(
                 text("SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan = :plan_id"),
                 {"plan_id": plan_id}
@@ -37,7 +37,6 @@ class FoodController:
             if not plan:
                 raise Exception(f"Plan with id {plan_id} not found")
 
-            # 2. Query all days × meal moments + food (left join)
             result = connection.execute(
                 text("""
                 SELECT
@@ -62,7 +61,6 @@ class FoodController:
                 {"plan_id": plan_id}
             )
 
-            # 3. Build structured response
             schedule = {}
             for row in result:
                 day = row.day_name
@@ -82,8 +80,7 @@ class FoodController:
                     schedule[day] = {}
 
                 schedule[day][moment] = food
-            print(schedule)
-            # 4. Return full response
+
             return {
                 "id_plan": plan.id_plan,
                 "title": plan.title,
@@ -272,17 +269,6 @@ class FoodController:
 
             new_plan_id = self.add_plan(title, description, objective)
 
-
-            # result = connection.execute(
-            #     text("""
-            #         INSERT INTO plans(title, plan_description, objetive)
-            #         VALUES (:title, :desc, :obj)
-            #         RETURNING id_plan
-            #     """),
-            #     {"title": title, "desc": description, "obj": objective}
-            # )
-            # new_plan_id = result.scalar()
-
             print(f"New plan ID: {new_plan_id}")
 
             # 4. Link all selected foods to the plan
@@ -326,4 +312,52 @@ class FoodController:
                 "plan_description": description,
                 "objetive": objective
             }
+        
+    def update_food_in_plan(self, plan_id: int, day: str, moment: str, food_id: int) -> None:
+        with engine.begin() as conn:
+            # Validate plan exists
+            plan_row = conn.execute(
+                text("SELECT id_plan FROM plans WHERE id_plan = :plan_id"),
+                {"plan_id": plan_id}
+            ).mappings().fetchone()
+            if not plan_row:
+                raise HTTPException(status_code=404, detail="Plan not found")
+
+            # Get day_id
+            day_row = conn.execute(
+                text("SELECT id FROM week_days WHERE name = :day"),
+                {"day": day}
+            ).mappings().fetchone()
+            if not day_row:
+                raise HTTPException(status_code=404, detail="Day not found")
+            day_id = day_row["id"]
+
+            # Get meal_moment_id
+            moment_row = conn.execute(
+                text("SELECT id FROM meal_moments WHERE name = :moment"),
+                {"moment": moment}
+            ).mappings().fetchone()
+            if not moment_row:
+                raise HTTPException(status_code=404, detail="Meal moment not found")
+            moment_id = moment_row["id"]
+
+            # Update food in weekly_meal_plan_food
+            result = conn.execute(
+                text("""
+                    UPDATE weekly_meal_plan_food
+                    SET food_id = :food_id
+                    WHERE plan_id = :plan_id AND day_id = :day_id AND meal_moment_id = :moment_id
+                """),
+                {
+                    "food_id": food_id,
+                    "plan_id": plan_id,
+                    "day_id": day_id,
+                    "moment_id": moment_id
+                }
+            )
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Meal entry not found in plan")
+            
+            return JSONResponse(content={"detail": "OK"}, status_code=200)
+
 

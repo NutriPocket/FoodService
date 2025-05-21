@@ -34,3 +34,9 @@ class Users(BaseModel):
 class FoodPreferenceRequest(BaseModel):
     user_id: str
     preferences: List[str]
+
+class FoodPlanUpdateRequest(BaseModel):
+    day: str
+    moment: str
+    foodId: int
+

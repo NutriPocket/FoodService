@@ -1,7 +1,7 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Body
 
 from controller.food_controller import FoodController
-from models.foodPlans import FoodPreferenceRequest, Plan, Plans, Food, PlanAssigment, Users
+from models.foodPlans import FoodPlanUpdateRequest, FoodPreferenceRequest, Plan, Plans, Food, PlanAssigment, Users
 
 router = APIRouter()
 
@@ -83,6 +83,15 @@ def get_foods_from_user_plan(userId: str):
 )
 def add_food_to_user_plan(userId: int, foodId: int) -> None:
     return FoodController().add_food_to_user_plan(userId, foodId)
+
+@router.put(
+    "/plans/{plan_id}/updateMeal",
+    summary="Update a food item for a specific day and moment in plan",
+    status_code=status.HTTP_200_OK
+)
+def update_meal_in_plan(plan_id: int, data: FoodPlanUpdateRequest):
+    return FoodController().update_food_in_plan(plan_id, data.day, data.moment, data.foodId)
+
 
 @router.delete(
     "/userPlan/{userId}/removeFood/{foodId}",
