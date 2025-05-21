@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import List
 
 
 class Plans(BaseModel):
@@ -22,3 +23,7 @@ class Users(BaseModel):
     id: int
     name: str
     id_plan: int
+
+class FoodPreferenceRequest(BaseModel):
+    user_id: int
+    preferences: List[str]
