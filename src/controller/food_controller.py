@@ -234,9 +234,9 @@ class FoodController:
                 ))
                 connection.commit()
 
-    def remove_food_from_user_plan(self, userId: int, foodId: int) -> None:
+    def remove_food_from_user_plan(self, userId: str, foodId: int) -> None:
         with self.engine.connect() as connection:
-            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
+            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = '{userId}'"))
             user = user_result.fetchone()
             if not user or user.id_plan is None:
                 raise Exception("User or user's plan not found")

@@ -98,7 +98,7 @@ def update_meal_in_plan(plan_id: int, data: FoodPlanUpdateRequest):
     summary="remove a food from user's plan",
     status_code=status.HTTP_200_OK
 )
-def remove_food_from_user_plan(userId: int, foodId: int) -> None:
+def remove_food_from_user_plan(userId: str, foodId: int) -> None:
     return FoodController().remove_food_from_user_plan(userId, foodId)
 
 @router.post(
