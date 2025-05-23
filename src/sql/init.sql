@@ -123,8 +123,8 @@ INSERT INTO food_meal_moments (food_id, meal_moment_id) VALUES
 
 -- Inserting mock plans
 
-INSERT INTO plans (id_plan, title, plan_description, objetive)
-VALUES (1, 'Plan Subir de Peso', 'Plan nutricional diseñado para ganar masa.', 'Ganar peso de forma saludable');
+INSERT INTO plans (title, plan_description, objetive)
+VALUES ('Plan Subir de Peso', 'Plan nutricional diseñado para ganar masa.', 'Ganar peso de forma saludable');
 
 -- Assign meals to each day
 
