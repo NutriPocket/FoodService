@@ -3,6 +3,7 @@ from os import getenv
 import os
 import dotenv
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
@@ -21,6 +22,7 @@ env_path = os.path.abspath(env_path)
 dotenv.load_dotenv(env_path)
 
 
+@app.exception_handler(RequestValidationError)
 @app.exception_handler(HTTPException)
 @app.exception_handler(Exception)
 async def exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -39,7 +41,8 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=JWTMiddleware())
 
 
 app.include_router(health_routes.router, prefix="/health", tags=["health"])
-app.include_router(food_routes.router, prefix="/food", tags=["food"])
+app.include_router(food_routes.router, tags=["food"])
+
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
