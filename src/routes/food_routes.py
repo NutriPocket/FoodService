@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, status
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
 from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
-from models.params import PostPlanBody
+from models.params import GetAllFoodsParams, PostPlanBody
 from models.response import CustomResponse, ErrorDTO
 
 router = APIRouter()
@@ -363,3 +363,32 @@ def remove_food_from_user_plan(data: FoodTimeDTO, user_id: str) -> CustomRespons
 )
 def get_food_by_id(food_id: int) -> CustomResponse[Food]:
     return FoodController().get_food_by_id(food_id)
+
+
+@router.get(
+    "/foods",
+    summary="Get all foods",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Food]],
+            "description": "List of foods"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def get_all_foods(search_name: str = Query(None, description="Search food by name. Case insensitive. Anywhere match")) -> CustomResponse[list[Food]]:
+    params = GetAllFoodsParams(search_name=search_name)
+
+    return FoodController().get_all_foods(params)

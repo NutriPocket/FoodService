@@ -17,8 +17,8 @@ class PostPlanBody(BaseModel):
     )
 
 
-class GetFoodByIdParams:
-    with_nutrition_facts: bool = False
+class GetAllFoodsParams:
+    search_name: Optional[str] = None
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
