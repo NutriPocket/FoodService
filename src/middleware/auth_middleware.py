@@ -14,8 +14,6 @@ class JWTMiddleware:
             "/redoc",
             "/openapi.json",
             "/favicon.ico",
-            "/food",
-            "/plans"
         ]
 
     async def __call__(self, request: Request, call_next):
@@ -24,6 +22,11 @@ class JWTMiddleware:
             return response
 
         if request.url.path == "/":
+            response = await call_next(request)
+            return response
+
+        referer: str = request.headers.get("referer", "")
+        if referer and (referer.startswith("http://127.0.0.1:") or referer.startswith("http://localhost:")) and referer.endswith("docs"):
             response = await call_next(request)
             return response
 

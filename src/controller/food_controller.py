@@ -1,363 +1,71 @@
-from http.client import HTTPException
 from typing import Optional
-from fastapi import status
-from fastapi.responses import JSONResponse
-from sqlalchemy import Engine, Executable, text
-from database.database import engine
 
+from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Plan, Plans, Food, PlanAssigment, Users
+from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
+
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
-        self.engine = engine
+        self.service = service or FoodService()
 
-    def get_plans(self):
-        with self.engine.connect() as connection:
-            result = connection.execute(text("SELECT id_plan, title, plan_description, objetive FROM plans"))
-            plans = []
-            for fila in result:
-                plan = {
-                    "id_plan": fila.id_plan,
-                    "title": fila.title,
-                    "plan_description": fila.plan_description,
-                    "objetive": fila.objetive,
-                }
-                plans.append(plan)
-            return {"plans":plans}
+    def get_plans(self) -> CustomResponse[list[Plan]]:
+        _plans = self.service.get_plans()
 
-    from sqlalchemy import text
+        return CustomResponse(data=_plans)
 
-    def get_plan(self, plan_id: int):
-        with self.engine.connect() as connection:
-            plan = connection.execute(
-                text("SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan = :plan_id"),
-                {"plan_id": plan_id}
-            ).fetchone()
-            if not plan:
-                raise Exception(f"Plan with id {plan_id} not found")
+    def get_plan(self, plan_id: int) -> CustomResponse[WeeklyPlan]:
+        _weekly_plan = self.service.get_weekly_plan_by_id(plan_id)
 
-            result = connection.execute(
-                text("""
-                SELECT
-                    wd.id AS day_id,
-                    wd.name AS day_name,
-                    mm.id AS meal_moment_id,
-                    mm.name AS meal_moment_name,
-                    f.id AS food_id,
-                    f.name AS food_name,
-                    f.description AS food_description,
-                    f.price AS food_price
-                FROM
-                    week_days wd
-                CROSS JOIN meal_moments mm
-                LEFT JOIN weekly_meal_plan_food wmpf
-                ON wmpf.plan_id = :plan_id
-                AND wmpf.day_id = wd.id
-                AND wmpf.meal_moment_id = mm.id
-                LEFT JOIN foods f ON f.id = wmpf.food_id
-                ORDER BY wd.id, mm.id
-                """),
-                {"plan_id": plan_id}
-            )
+        return CustomResponse(data=_weekly_plan)
 
-            schedule = {}
-            for row in result:
-                day = row.day_name
-                moment = row.meal_moment_name
-                food = None
-                if row.food_id:
-                    food = {
-                        "id": row.food_id,
-                        "name": row.food_name,
-                        "description": row.food_description,
-                        "price": float(row.food_price)
-                    }
-                else:
-                    food = "No meal selected"
+    def add_plan(self, plan: PlanDTO) -> CustomResponse[Plan]:
+        _plan = self.service.save_food_plan(plan)
 
-                if day not in schedule:
-                    schedule[day] = {}
+        return CustomResponse(data=_plan)
 
-                schedule[day][moment] = food
+    def get_user_plan(self, userId: str) -> CustomResponse[Plan]:
+        _plan = self.service.get_food_plan_by_user_id(userId)
 
-            return {
-                "id_plan": plan.id_plan,
-                "title": plan.title,
-                "plan_description": plan.plan_description,
-                "objetive": plan.objetive,
-                "weekly_plan": schedule
-            }
+        return CustomResponse(data=_plan)
 
+    def put_user_plan(self, userId: str, assignment: PlanAssignmentDTO) -> CustomResponse[PlanAssignment]:
+        _plan_assignment = self.service.put_user_plan(userId, assignment)
 
-    def add_plan(self, aTitle, aDescription, aObjetive):
-        print("add plan")
-        with self.engine.connect() as connection:
-            result = connection.execute(
-            text("""
-                INSERT INTO plans(title, plan_description, objetive)
-                VALUES (:title, :description, :objetive)
-                RETURNING id_plan
-            """),
-            {"title": aTitle, "description": aDescription, "objetive": aObjetive}
-            )
-            connection.commit()
-            plan_id = result.scalar()
-            return plan_id
+        return CustomResponse(data=_plan_assignment)
 
-    def get_user_plan(self, userId) -> Plans:
-        with self.engine.connect() as connection:
-            result = connection.execute(text(f"SELECT id_user, id_plan FROM users WHERE id_user='{userId}'"))
-            
-            user = result.fetchone()
-            idPlan = user.id_plan
-            
-            result = connection.execute(text(f"SELECT id_plan, title, plan_description, objetive FROM plans WHERE id_plan={idPlan}"))
-            plan = result.fetchone()
-            if plan:
-                plan_json = {
-                    "id_plan": plan.id_plan,
-                    "title": plan.title,
-                    "plan_description": plan.plan_description,
-                    "objetive": plan.objetive,
-                }
-                return Plans(**plan_json)
-            else:
-                return Plans()
-    
-    def post_user(self, username) -> None:
-        with self.engine.connect() as connection:
-            result = connection.execute(text(f"INSERT INTO users(name) VALUES ('{username}')"))
-            connection.commit()
-    
-    def put_user_plan(self, userId, planId) -> None:
-        with self.engine.connect() as connection:
-            print("put user plan")
-            print(userId)
-            print(planId)
+    def get_foods_from_plan(self, plan_id: int) -> CustomResponse[list[Food]]:
+        _foods = self.service.get_foods_from_plan(plan_id)
 
-            # Verificar si exl usuario existe
-            result = connection.execute(
-                text("SELECT id_user FROM users WHERE id_user = :userId"),
-                {"userId": userId}
-            )
-            user = result.fetchone()
-            if user:
-                # Si existe, actualizar el plan
-                print("entra a actualizar el plan")
-                connection.execute(
-                    text("UPDATE users SET id_plan = :planId WHERE id_user = :userId"),
-                    {"planId": planId, "userId": userId}
-                )
-            else:
-                # Si no existe, crear el usuario con ese plan
-                print("entra a crear un nuevo usuario")
-                connection.execute(
-                    text("INSERT INTO users (id_user, id_plan) VALUES (:userId, :planId)"),
-                    {"userId": userId, "planId": planId}
-                )
-            connection.commit()
+        return CustomResponse(data=_foods)
 
-    def get_foods_from_plan(self, plan_id: int):
-        with self.engine.connect() as connection:
-            result = connection.execute(text(
-                f"""
-                SELECT f.id, f.name, f.description, f.price, f.created_at
-                FROM foodplanlink fpl
-                JOIN foods f ON fpl.food_id = f.id
-                WHERE fpl.plan_id = {plan_id}
-                """
-            ))
+    def get_foods_from_user_plan(self, user_id: str) -> CustomResponse[list[Food]]:
+        _foods = self.service.get_foods_from_user_plan(user_id)
 
-            foods = []
-            for row in result:
-                foods.append({
-                    "id": row.id,
-                    "name": row.name,
-                    "description": row.description,
-                    "price": float(row.price),
-                    "created_at": str(row.created_at),
-                })
+        return CustomResponse(data=_foods)
 
-            return {"foods": foods}
+    def add_food_to_user_plan(self, userId: str, food: FoodLinkDTO) -> CustomResponse[WeeklyPlan]:
+        _foods = self.service.save_food_to_user_plan(userId, food)
 
-    def get_foods_from_user_plan(self, user_id: str):
-        with self.engine.connect() as connection:
-            user_result = connection.execute(text(
-                f"SELECT id_plan FROM users WHERE id_user = '{user_id}'"
-            ))
-            user = user_result.fetchone()
-            if not user or user.id_plan is None:
-                return {"foods": []}
+        return CustomResponse(data=_foods)
 
-            plan_id = user.id_plan
+    def remove_food_from_user_plan(self, userId: str, data: FoodTimeDTO) -> CustomResponse[WeeklyPlan]:
+        _foods = self.service.remove_food_from_user_plan(userId, data)
 
-            foods_result = connection.execute(text(
-                f"""
-                SELECT f.id, f.name, f.description, f.price, f.created_at
-                FROM foodplanlink fpl
-                JOIN foods f ON fpl.food_id = f.id
-                WHERE fpl.plan_id = {plan_id}
-                """
-            ))
+        return CustomResponse(data=_foods)
 
-            foods = []
-            for row in foods_result:
-                foods.append({
-                    "id": row.id,
-                    "name": row.name,
-                    "description": row.description,
-                    "price": float(row.price),
-                    "created_at": str(row.created_at),
-                })
-            print(foods)
+    def create_plan_from_preferences(self, user_id: str, preferences: list) -> CustomResponse[Plan]:
+        _plan = self.service.create_food_plan_by_preferences(
+            user_id, preferences)
 
-            return {"foods": foods}
+        return CustomResponse(data=_plan)
 
+    def update_food_in_plan(self, plan_id: int, data: FoodLinkDTO) -> CustomResponse[WeeklyPlan]:
+        _plan = self.service.update_food_in_plan(plan_id, data)
 
-    def add_food_to_user_plan(self, userId: int, foodId: int) -> None:
-        with self.engine.connect() as connection:
-            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = {userId}"))
-            user = user_result.fetchone()
-            if not user or user.id_plan is None:
-                raise Exception("User or user's plan not found")
+        return CustomResponse(data=_plan)
 
-            planId = user.id_plan
+    def get_food_by_id(self, food_id: int) -> CustomResponse[Food]:
+        _food = self.service.get_food_by_id(food_id)
 
-            existing = connection.execute(text(
-                f"SELECT 1 FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
-            )).fetchone()
-
-            if not existing:
-                connection.execute(text(
-                    f"INSERT INTO foodplanlink(food_id, plan_id) VALUES ({foodId}, {planId})"
-                ))
-                connection.commit()
-
-    def remove_food_from_user_plan(self, userId: str, foodId: int) -> None:
-        with self.engine.connect() as connection:
-            user_result = connection.execute(text(f"SELECT id_plan FROM users WHERE id_user = '{userId}'"))
-            user = user_result.fetchone()
-            if not user or user.id_plan is None:
-                raise Exception("User or user's plan not found")
-
-            planId = user.id_plan
-
-            connection.execute(text(
-                f"DELETE FROM foodplanlink WHERE food_id = {foodId} AND plan_id = {planId}"
-            ))
-            connection.commit()
-
-    def create_plan_from_preferences(self, user_id: int, preferences: list) -> Plans:
-        with self.engine.connect() as connection:
-            if not preferences:
-                raise Exception("No food preferences provided.")
-
-            food_id_placeholders = ','.join([str(int(fid)) for fid in preferences])
-            result = connection.execute(
-                text(f"SELECT id FROM foods WHERE id IN ({food_id_placeholders})")
-            )
-            matching_foods = [row.id for row in result]
-
-            if not matching_foods:
-                raise Exception("None of the provided food IDs were found in the database.")
-
-            # 2. Create a new plan
-            title = f"Plan for User {user_id}"
-            description = f"Generated from selected food IDs"
-            objective = "Automatically generated based on preferences"
-
-            new_plan_id = self.add_plan(title, description, objective)
-
-            print(f"New plan ID: {new_plan_id}")
-
-            # 4. Link all selected foods to the plan
-            for food_id in matching_foods:
-                connection.execute(
-                    text("INSERT INTO foodplanlink(food_id, plan_id) VALUES (:food_id, :plan_id)"),
-                    {"food_id": food_id, "plan_id": new_plan_id}
-                )
-
-            # 5. Fill the weekly_meal_plan_food table (7 days × 4 moments)
-            week_days = connection.execute(text("SELECT id FROM week_days ORDER BY id")).fetchall()
-            meal_moments = connection.execute(text("SELECT id FROM meal_moments ORDER BY id")).fetchall()
-
-            food_index = 0
-            total_foods = len(matching_foods)
-
-            for day in week_days:
-                for moment in meal_moments:
-                    food_id = matching_foods[food_index % total_foods]
-                    connection.execute(
-                        text("""
-                            INSERT INTO weekly_meal_plan_food (plan_id, day_id, meal_moment_id, food_id)
-                            VALUES (:plan_id, :day_id, :moment_id, :food_id)
-                        """),
-                        {
-                            "plan_id": new_plan_id,
-                            "day_id": day.id,
-                            "moment_id": moment.id,
-                            "food_id": food_id
-                        }
-                    )
-                    food_index += 1
-
-            self.put_user_plan(user_id, new_plan_id)
-            print(f"User {user_id} assigned to new plan {new_plan_id}")
-            connection.commit()
-
-            return {
-                "id_plan": new_plan_id,
-                "title": title,
-                "plan_description": description,
-                "objetive": objective
-            }
-        
-    def update_food_in_plan(self, plan_id: int, day: str, moment: str, food_id: int) -> None:
-        with engine.begin() as conn:
-            # Validate plan exists
-            plan_row = conn.execute(
-                text("SELECT id_plan FROM plans WHERE id_plan = :plan_id"),
-                {"plan_id": plan_id}
-            ).mappings().fetchone()
-            if not plan_row:
-                raise HTTPException(status_code=404, detail="Plan not found")
-
-            # Get day_id
-            day_row = conn.execute(
-                text("SELECT id FROM week_days WHERE name = :day"),
-                {"day": day}
-            ).mappings().fetchone()
-            if not day_row:
-                raise HTTPException(status_code=404, detail="Day not found")
-            day_id = day_row["id"]
-
-            # Get meal_moment_id
-            moment_row = conn.execute(
-                text("SELECT id FROM meal_moments WHERE name = :moment"),
-                {"moment": moment}
-            ).mappings().fetchone()
-            if not moment_row:
-                raise HTTPException(status_code=404, detail="Meal moment not found")
-            moment_id = moment_row["id"]
-
-            # Update food in weekly_meal_plan_food
-            result = conn.execute(
-                text("""
-                    UPDATE weekly_meal_plan_food
-                    SET food_id = :food_id
-                    WHERE plan_id = :plan_id AND day_id = :day_id AND meal_moment_id = :moment_id
-                """),
-                {
-                    "food_id": food_id,
-                    "plan_id": plan_id,
-                    "day_id": day_id,
-                    "moment_id": moment_id
-                }
-            )
-            if result.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Meal entry not found in plan")
-            
-            return JSONResponse(content={"detail": "OK"}, status_code=200)
-
-
+        return CustomResponse(data=_food)

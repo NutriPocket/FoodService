@@ -1,59 +1,177 @@
-from fastapi import APIRouter, status, Body
+from fastapi import APIRouter, Query, status
 
 from controller.food_controller import FoodController
-from models.foodPlans import FoodPlanUpdateRequest, FoodPreferenceRequest, Plan, Plans, Food, PlanAssigment, Users
+from models.errors.errors import ValidationError
+from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
+from models.params import PostPlanBody
+from models.response import CustomResponse, ErrorDTO
 
 router = APIRouter()
 
+
 @router.get(
     "/plans",
-    summary="get the differents plans",
-    status_code=status.HTTP_200_OK
+    summary="Retrieves all the differents plans",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Plan]],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def get_food_plans() -> dict:
+def get_food_plans() -> CustomResponse[list[Plan]]:
     return FoodController().get_plans()
 
-@router.get(
-    "/plans/{aId}",
-    summary="get a specific plan",
-    status_code=status.HTTP_200_OK
-)
-def get_plan_by_id(aId:int) -> Plan:
-    return FoodController().get_plan(aId)
-
-@router.post(
-    "/plans/{aTitle}/{aDescription}/{aObjetive}",
-    summary="post a plan in db",
-    status_code=status.HTTP_200_OK
-)
-def post_plan(aTitle:str, aDescription:str, aObjetive:str) -> None:
-    return FoodController().add_plan(aTitle, aDescription, aObjetive)
 
 @router.get(
-    "/userPlan/{userId}",
-    summary="get the user plan",
-    status_code=status.HTTP_200_OK
+    "/plans/{id}",
+    summary="Retrieves a specific detailed weekly plan",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[WeeklyPlan],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Plan not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def get_user_plan(userId:str) -> Plans:
-    return FoodController().get_user_plan(userId)
+def get_plan_by_id(id: int) -> CustomResponse[WeeklyPlan]:
+    return FoodController().get_plan(id)
+
 
 @router.post(
-    "/user/{username}",
-    summary="set a user in the db",
-    status_code=status.HTTP_200_OK
+    "/plans",
+    summary="Create a new food plan",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[Plan],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def post_user(username:str) -> None:
-    return FoodController().post_user(username)
+def post_plan(
+    body: PostPlanBody,
+    from_preferences: bool = Query(
+        default=False,
+        description="If true, the plan will be created from user preferences",
+    )
+) -> CustomResponse[Plan]:
+    if from_preferences and body.preferences:
+        return FoodController().create_plan_from_preferences(
+            body.preferences.user_id, body.preferences.preferences
+        )
+
+    if not body.plan:
+        raise ValidationError(
+            detail="If you want to create a plan from preferences, you need to provide the user_id and preferences. If you want to create a plan from scratch, you need to provide the plan title, description and objective.",
+            title="Missing body or wrong body"
+        )
+
+    return FoodController().add_plan(body.plan)
+
+
+@router.get(
+    "/users/{user_id}/plan",
+    summary="Retrieves the user's plan",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[Plan],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Plan not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def get_user_plan(user_id: str) -> CustomResponse[Plan]:
+    return FoodController().get_user_plan(user_id)
+
 
 @router.put(
-    "/users/{userId}/plan",
-    summary="set a plan in a user",
-    status_code=status.HTTP_200_OK
+    "/users/{user_id}/plan",
+    summary="Replace the user's plan",
+    description="If the user already has a plan, it will be replaced. If not, a new plan will be created.",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[PlanAssignment],
+            "description": "Update user's plans"
+        },
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[PlanAssignment],
+            "description": "Create user's plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def put_user_plan(userId: str, assigment: PlanAssigment) -> None:
-    planId = assigment.plan_id
-    print(f"planId: {planId}")
-    return FoodController().put_user_plan(userId, planId)
+def put_user_plan(assigment: PlanAssignmentDTO, user_id: str) -> CustomResponse[PlanAssignment]:
+    return FoodController().put_user_plan(user_id, assigment)
 
 
 # def post_user_plan(userId:int, planId:int) -> None:
@@ -61,50 +179,187 @@ def put_user_plan(userId: str, assigment: PlanAssigment) -> None:
 #
 # 2 formas de obtener las comidas de un plan: por ID de plan o ID de usuario
 @router.get(
-    "/plans/{planId}/foods",
+    "/plans/{plan_id}/foods",
     summary="Get all foods in a plan",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Food]],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def get_foods_from_plan(planId: int):
-    return FoodController().get_foods_from_plan(planId)
+def get_foods_from_plan(plan_id: int) -> CustomResponse[list[Food]]:
+    return FoodController().get_foods_from_plan(plan_id)
+
 
 @router.get(
-    "/user/{userId}/foods",
+    "/users/{user_id}/plan/foods",
     summary="Get all foods from a user's plan",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Food]],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Plan not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def get_foods_from_user_plan(userId: str):
-    return FoodController().get_foods_from_user_plan(userId)
+def get_foods_from_user_plan(user_id: str) -> CustomResponse[list[Food]]:
+    return FoodController().get_foods_from_user_plan(user_id)
+
 
 @router.post(
-    "/user/{userId}/addFood/{foodId}",
-    summary="add a food to user's plan",
-    status_code=status.HTTP_200_OK
+    "/users/{user_id}/plan/foods",
+    summary="Adds a new food for the user's plan",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[WeeklyPlan],
+            "description": "List of food plans"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Plan not found"
+        },
+        status.HTTP_409_CONFLICT: {
+            "model": ErrorDTO,
+            "description": "A food already exists at that moment in that day in the plan"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def add_food_to_user_plan(userId: int, foodId: int) -> None:
-    return FoodController().add_food_to_user_plan(userId, foodId)
+def add_food_to_user_plan(req: FoodLinkDTO, user_id: str) -> CustomResponse[WeeklyPlan]:
+    return FoodController().add_food_to_user_plan(user_id, req)
+
 
 @router.put(
-    "/plans/{plan_id}/updateMeal",
+    "/plans/{plan_id}/foods",
     summary="Update a food item for a specific day and moment in plan",
-    status_code=status.HTTP_200_OK
+    description="Update a food item for a specific day and moment in plan, retrieves the updated weekly plan",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[WeeklyPlan],
+            "description": "Update a food from the user's plan"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Item not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def update_meal_in_plan(plan_id: int, data: FoodPlanUpdateRequest):
-    return FoodController().update_food_in_plan(plan_id, data.day, data.moment, data.foodId)
+def update_meal_in_plan(plan_id: int, data: FoodLinkDTO) -> CustomResponse[WeeklyPlan]:
+    return FoodController().update_food_in_plan(plan_id, data)
 
 
 @router.delete(
-    "/userPlan/{userId}/removeFood/{foodId}",
+    "/users/{user_id}/plan/foods",
     summary="remove a food from user's plan",
-    status_code=status.HTTP_200_OK
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[WeeklyPlan],
+            "description": "Remove a food from the user's plan"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Plan not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def remove_food_from_user_plan(userId: str, foodId: int) -> None:
-    return FoodController().remove_food_from_user_plan(userId, foodId)
+def remove_food_from_user_plan(data: FoodTimeDTO, user_id: str) -> CustomResponse[WeeklyPlan]:
+    return FoodController().remove_food_from_user_plan(user_id, data)
 
-@router.post(
-    "/plans/fromPreferences",
-    summary="Create a new plan based on user food preferences",
-    status_code=status.HTTP_201_CREATED
+
+@router.get(
+    "/foods/{food_id}",
+    summary="Get food by id",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[Food],
+            "description": "Food found"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Food not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
 )
-def create_plan_from_preferences(data: FoodPreferenceRequest) -> Plans:
-    return FoodController().create_plan_from_preferences(data.user_id, data.preferences)
+def get_food_by_id(food_id: int) -> CustomResponse[Food]:
+    return FoodController().get_food_by_id(food_id)
