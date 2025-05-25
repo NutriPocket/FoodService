@@ -3,6 +3,7 @@ from typing import Optional
 
 from models.errors.errors import NotFoundError
 from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.params import GetAllFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
 
@@ -57,6 +58,10 @@ class IFoodService(metaclass=ABCMeta):
 
     @abstractmethod
     def get_food_by_id(self, food_id: int) -> Food:
+        pass
+
+    @abstractmethod
+    def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         pass
 
 
@@ -244,3 +249,6 @@ class FoodService(IFoodService):
             raise NotFoundError(f"Food with id {food_id} not found")
 
         return food
+
+    def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
+        return self.repository.get_all_foods(params)

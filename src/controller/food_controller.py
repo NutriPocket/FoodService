@@ -1,5 +1,6 @@
 from typing import Optional
 
+from models.params import GetAllFoodsParams
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
 from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
@@ -69,3 +70,8 @@ class FoodController:
         _food = self.service.get_food_by_id(food_id)
 
         return CustomResponse(data=_food)
+
+    def get_all_foods(self, params: GetAllFoodsParams) -> CustomResponse[list[Food]]:
+        _foods = self.service.get_all_foods(params)
+
+        return CustomResponse(data=_foods)

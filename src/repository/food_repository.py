@@ -4,7 +4,7 @@ from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
 from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
-from models.params import GetFoodByIdParams
+from models.params import GetAllFoodsParams
 from sqlalchemy.exc import IntegrityError
 
 
@@ -79,6 +79,10 @@ class IFoodRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def get_food_by_id(self, food_id: int) -> Optional[Food]:
+        pass
+
+    @abstractmethod
+    def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         pass
 
 
@@ -404,3 +408,25 @@ class FoodRepository(IFoodRepository):
 
             if result:
                 return Food(**result._mapping)
+
+    def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
+        query = text("""
+            SELECT id, name, description, price, created_at
+            FROM foods
+        """)
+
+        _params: dict[str, Any] = dict()
+
+        if params.search_name:
+            query = text("""
+                SELECT id, name, description, price, created_at
+                FROM foods
+                WHERE name ILIKE :search_name
+            """)
+
+            _params["search_name"] = f"%{params.search_name}%"
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, _params).fetchall()
+
+            return [Food(**row._mapping) for row in result]
