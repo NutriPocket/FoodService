@@ -77,6 +77,10 @@ class IFoodRepository(metaclass=ABCMeta):
     def get_food_by_id_from_plan(self, plan_id: int, food_id: int) -> Optional[Food]:
         pass
 
+    @abstractmethod
+    def get_food_by_id(self, food_id: int) -> Optional[Food]:
+        pass
+
 
 class FoodRepository(IFoodRepository):
     def __init__(self, engine_: Optional[Engine] = None):
@@ -218,16 +222,7 @@ class FoodRepository(IFoodRepository):
                 f.name, 
                 f.description, 
                 f.price, 
-                f.created_at,
-                f.calories_per_100g,
-                f.protein_per_100g,
-                f.carbs_per_100g,
-                f.fiber_per_100g,
-                f.saturated_fats_per_100g,
-                f.monounsaturated_fats_per_100g,
-                f.polyunsaturated_fats_per_100g,
-                f.trans_fats_per_100g,
-                f.cholesterol_per_100g
+                f.created_at
             FROM foodplanlink fpl
             JOIN foods f ON fpl.food_id = f.id
             WHERE fpl.plan_id = :plan_id
@@ -374,6 +369,35 @@ class FoodRepository(IFoodRepository):
         """)
 
         params = {"plan_id": plan_id, "food_id": food_id}
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+
+            if result:
+                return Food(**result._mapping)
+
+    def get_food_by_id(self, food_id: int) -> Optional[Food]:
+        query = text("""
+            SELECT 
+                id, 
+                name, 
+                description, 
+                price, 
+                created_at,
+                calories_per_100g,
+                protein_per_100g,
+                carbs_per_100g,
+                fiber_per_100g,
+                saturated_fats_per_100g,
+                monounsaturated_fats_per_100g,
+                polyunsaturated_fats_per_100g,
+                trans_fats_per_100g,
+                cholesterol_per_100g
+            FROM foods
+            WHERE id = :food_id
+        """)
+
+        params = {"food_id": food_id}
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchone()

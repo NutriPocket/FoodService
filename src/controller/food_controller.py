@@ -64,3 +64,8 @@ class FoodController:
         _plan = self.service.update_food_in_plan(plan_id, data)
 
         return CustomResponse(data=_plan)
+
+    def get_food_by_id(self, food_id: int) -> CustomResponse[Food]:
+        _food = self.service.get_food_by_id(food_id)
+
+        return CustomResponse(data=_food)

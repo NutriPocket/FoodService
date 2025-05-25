@@ -55,6 +55,10 @@ class IFoodService(metaclass=ABCMeta):
     def create_food_plan_by_preferences(self, user_id: str, preferences: list) -> Plan:
         pass
 
+    @abstractmethod
+    def get_food_by_id(self, food_id: int) -> Food:
+        pass
+
 
 class FoodService(IFoodService):
     def __init__(self, repository: Optional[IFoodRepository] = None):
@@ -232,3 +236,11 @@ class FoodService(IFoodService):
             raise NotFoundError(f"Plan with id {new_plan.id_plan} not found")
 
         return _ret
+
+    def get_food_by_id(self, food_id: int) -> Food:
+        food = self.repository.get_food_by_id(food_id)
+
+        if not food:
+            raise NotFoundError(f"Food with id {food_id} not found")
+
+        return food

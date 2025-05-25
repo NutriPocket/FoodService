@@ -332,3 +332,34 @@ def update_meal_in_plan(plan_id: int, data: FoodLinkDTO) -> CustomResponse[Weekl
 )
 def remove_food_from_user_plan(data: FoodTimeDTO, user_id: str) -> CustomResponse[WeeklyPlan]:
     return FoodController().remove_food_from_user_plan(user_id, data)
+
+
+@router.get(
+    "/foods/{food_id}",
+    summary="Get food by id",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[Food],
+            "description": "Food found"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Food not found"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def get_food_by_id(food_id: int) -> CustomResponse[Food]:
+    return FoodController().get_food_by_id(food_id)
