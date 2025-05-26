@@ -55,9 +55,12 @@ class FoodController:
 
         return CustomResponse(data=_foods)
 
-    def create_plan_from_preferences(self, user_id: str, preferences: list) -> CustomResponse[Plan]:
+    def create_plan_from_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> CustomResponse[Plan]:
         _plan = self.service.create_food_plan_by_preferences(
-            user_id, preferences)
+            user_id=user_id,
+            preferences=preferences,
+            plan=plan
+        )
 
         return CustomResponse(data=_plan)
 
