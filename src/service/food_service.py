@@ -253,19 +253,13 @@ class FoodService(IFoodService):
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         return self.repository.get_all_foods(params)
 
-    def create_food_plan_by_preferences(self, user_id: str, preferences: list) -> Plan:
+    def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:
         food_id_placeholders = [str(int(fid)) for fid in preferences]
         _matches = self.repository.get_matching_food_ids(food_id_placeholders)
         if not _matches:
             raise NotFoundError("No matching foods found")
 
-        _new_plan = PlanDTO(
-            title=f"Plan for user {user_id}",
-            plan_description=f"Generated from selected food IDs",
-            objetive="Automatically generated based on preferences"
-        )
-
-        new_plan: Plan = self.save_food_plan(_new_plan)
+        new_plan: Plan = self.save_food_plan(plan)
 
         _days = self.repository.get_days()
         _moments = self.repository.get_moments()
@@ -290,3 +284,4 @@ class FoodService(IFoodService):
             raise NotFoundError(f"Plan with id {new_plan.id_plan} not found")
 
         return _ret
+
