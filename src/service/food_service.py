@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
@@ -62,6 +62,10 @@ class IFoodService(metaclass=ABCMeta):
 
     @abstractmethod
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
+        pass
+
+    @abstractmethod
+    def save_food_in_db(self, food: FoodDTO) -> Food:
         pass
 
 
@@ -252,3 +256,6 @@ class FoodService(IFoodService):
 
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         return self.repository.get_all_foods(params)
+    
+    def save_food_in_db(self, food: FoodDTO) -> Food:
+        return self.repository.save_food(food)

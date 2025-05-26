@@ -3,7 +3,7 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from sqlalchemy.exc import IntegrityError
 
@@ -83,6 +83,10 @@ class IFoodRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
+        pass
+
+    @abstractmethod
+    def save_food(self, food: FoodDTO) -> Plan:
         pass
 
 
@@ -430,3 +434,42 @@ class FoodRepository(IFoodRepository):
             result = connection.execute(query, _params).fetchall()
 
             return [Food(**row._mapping) for row in result]
+
+    def save_food(self, food: FoodDTO) -> Plan:
+        query = text("""
+            INSERT INTO foods (name, description, price, calories_per_100g, 
+            protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
+            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
+            trans_fats_per_100g, cholesterol_per_100g)
+            VALUES (:name, :description, :price, :calories_per_100g, :protein_per_100g, 
+            :carbs_per_100g, :fiber_per_100g, :saturated_fats_per_100g, 
+            :monounsaturated_fats_per_100g, :polyunsaturated_fats_per_100g, 
+            :trans_fats_per_100g, :cholesterol_per_100g)
+            RETURNING id, name, description, price, calories_per_100g, protein_per_100g, 
+            carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
+            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
+            trans_fats_per_100g, cholesterol_per_100g, created_at
+        """)
+
+        params = {
+            "name": food.name,
+            "description": food.description,
+            "price": food.price,
+            "calories_per_100g": food.calories_per_100g,
+            "protein_per_100g": food.protein_per_100g,
+            "carbs_per_100g": food.carbs_per_100g,
+            "fiber_per_100g": food.fiber_per_100g,
+            "saturated_fats_per_100g": food.saturated_fats_per_100g,
+            "monounsaturated_fats_per_100g": food.monounsaturated_fats_per_100g,
+            "polyunsaturated_fats_per_100g": food.polyunsaturated_fats_per_100g,
+            "trans_fats_per_100g": food.trans_fats_per_100g,
+            "cholesterol_per_100g": food.cholesterol_per_100g
+        }
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+
+            if not result:
+                raise Exception("Error saving food")
+
+            return Food(**result._mapping)
