@@ -99,7 +99,7 @@ def post_plan(
 ) -> CustomResponse[Plan]:
     if from_preferences and body.preferences:
         return FoodController().create_plan_from_preferences(
-            body.preferences.user_id, body.preferences.preferences
+            body.preferences.user_id, body.preferences.preferences, body.plan
         )
 
     if not body.plan:
