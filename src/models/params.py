@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from models.foodPlans import FoodPreferenceRequest, PlanDTO
+from models.foodPlans import FoodPreferenceRequest, PlanDTO, FoodDTO
 
 
 class PostPlanBody(BaseModel):
@@ -23,3 +23,10 @@ class GetAllFoodsParams:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+class PostFoodBody(BaseModel):
+    food: Optional[FoodDTO] = Field(
+        None,
+        title="Food",
+        description="Food object to be created",
+    )

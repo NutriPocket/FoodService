@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query, status
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
 from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
-from models.params import GetAllFoodsParams, PostPlanBody
+from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody
 from models.response import CustomResponse, ErrorDTO
 
 router = APIRouter()
@@ -392,3 +392,34 @@ def get_all_foods(search_name: str = Query(None, description="Search food by nam
     params = GetAllFoodsParams(search_name=search_name)
 
     return FoodController().get_all_foods(params)
+
+@router.post(
+    "/food",
+    summary="Create a new food",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[Food],
+            "description": "List of foods"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def post_food(body: PostFoodBody) -> CustomResponse[Plan]:
+    if not body.food:
+        raise ValidationError(
+            detail="If you want to create a food from scratch, you need to provide a long list of params...",
+            title="Missing body or wrong body"
+    )
+    return FoodController().add_food_in_db(body.food)
