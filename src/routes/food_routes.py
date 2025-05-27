@@ -416,7 +416,7 @@ def get_all_foods(search_name: str = Query(None, description="Search food by nam
         },
     }
 )
-def post_food(body: PostFoodBody) -> CustomResponse[Plan]:
+def post_food(body: PostFoodBody) -> CustomResponse[Food]:
     if not body.food:
         raise ValidationError(
             detail="If you want to create a food from scratch, you need to provide a long list of params...",
