@@ -89,6 +89,10 @@ class IFoodRepository(metaclass=ABCMeta):
     def save_food(self, food: FoodDTO) -> Plan:
         pass
 
+    @abstractmethod
+    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+        pass
+
 
 class FoodRepository(IFoodRepository):
     def __init__(self, engine_: Optional[Engine] = None):
@@ -473,3 +477,22 @@ class FoodRepository(IFoodRepository):
                 raise Exception("Error saving food")
 
             return Food(**result._mapping)
+    
+    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+        query = text("""
+            SELECT ingredients
+            FROM foods
+            WHERE id = :food_id
+            LIMIT 1
+        """)
+
+        params = {"food_id": food_id}
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+
+            if result:
+                return result[0]
+
+        return None
+            

@@ -68,6 +68,9 @@ class IFoodService(metaclass=ABCMeta):
     def save_food_in_db(self, food: FoodDTO) -> Food:
         pass
 
+    @abstractmethod
+    def get_ingredients(self, food_id: int) -> Optional[list[str]]:
+        pass
 
 class FoodService(IFoodService):
     def __init__(self, repository: Optional[IFoodRepository] = None):
@@ -292,3 +295,10 @@ class FoodService(IFoodService):
 
         return _ret
 
+    def get_ingredients(self, food_id: int) -> list[str]:
+        ingredients = self.repository.get_ingredients_by_food_id(food_id)
+
+        if not ingredients:
+            raise NotFoundError(f"Ingredients for food with id {food_id} not found")
+
+        return ingredients

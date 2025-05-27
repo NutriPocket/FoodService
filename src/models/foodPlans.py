@@ -177,6 +177,11 @@ class FoodDTO(BaseModel):
         ge=0,
         le=100
     )
+    ingredients: Optional[List[str]] = Field(
+        None,
+        title="Ingredients",
+        description="List of ingredients with recommended quantities and home measurements"
+    )
 
 
 class Food(FoodDTO):

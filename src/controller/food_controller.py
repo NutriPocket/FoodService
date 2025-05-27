@@ -82,3 +82,8 @@ class FoodController:
     def add_food_in_db(self, food: FoodDTO) -> CustomResponse[Food]:
         _foods = self.service.save_food_in_db(food)
         return CustomResponse(data=_foods)
+
+    def get_ingredients_by_food_id(self, food_id: int) -> CustomResponse[list[str]]:
+        _ingredients = self.service.get_ingredients(food_id)
+    
+        return CustomResponse(data=_ingredients)

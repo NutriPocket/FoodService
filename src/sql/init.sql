@@ -29,26 +29,47 @@ CREATE TABLE IF NOT EXISTS foods (
     polyunsaturated_fats_per_100g SMALLINT,
     trans_fats_per_100g SMALLINT,
     cholesterol_per_100g SMALLINT,
+    ingredients TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-INSERT INTO foods (name, description, price, calories_per_100g, protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, trans_fats_per_100g, cholesterol_per_100g) VALUES
+INSERT INTO foods ( name, description, price, calories_per_100g, protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, monounsaturated_fats_per_100g,
+    polyunsaturated_fats_per_100g, trans_fats_per_100g, cholesterol_per_100g, ingredients) VALUES
+    
     -- Subir de Peso (plan_id = 1)
-    ('Pasta con salsa cremosa', 'Pasta con salsa de crema y pollo, alto en calorías.', 8.50, 180, 7, 28, 2, 3, 2, 1, 0, 25),
-    ('Batido de frutas y avena', 'Batido energético con frutas, avena y leche entera.', 5.00, 110, 5, 18, 2, 1, 1, 0, 0, 10),
+    ('Pasta con salsa cremosa', 'Pasta con salsa de crema y pollo, alto en calorías.', 8.50, 180, 7, 28, 2, 3, 2, 1, 0, 25,
+    ARRAY['100g pasta cocida (¾ taza)', '50g crema (3 cucharadas)', '150g pechuga de pollo (1 unidad pequeña)', '5g queso parmesano (1 cucharada)', '5ml aceite de oliva (1 cucharadita)']),
+    
+    ('Batido de frutas y avena', 'Batido energético con frutas, avena y leche entera.', 5.00, 110, 5, 18, 2, 1, 1, 0, 0, 10,
+    ARRAY['100ml leche entera (½ taza)', '50g banana (½ unidad)', '30g avena (3 cucharadas)', '10g miel (1 cucharada)', '50g frutillas (3 unidades medianas)']),
+
     -- Bajar de Peso (plan_id = 2)
-    ('Ensalada de pollo', 'Ensalada fresca con pechuga de pollo a la plancha.', 7.00, 90, 12, 4, 2, 1, 1, 0, 0, 30),
-    ('Sopa de verduras', 'Sopa ligera de vegetales variados.', 4.50, 45, 2, 8, 2, 0, 0, 0, 0, 0),
+    ('Ensalada de pollo', 'Ensalada fresca con pechuga de pollo a la plancha.', 7.00, 90, 12, 4, 2, 1, 1, 0, 0, 30,
+    ARRAY['120g pechuga de pollo (1 unidad mediana)', '30g lechuga (1 taza picada)', '50g tomate (½ unidad)', '10ml aceite de oliva (1 cucharada)', '5ml jugo de limón (1 cucharadita)']),
+    
+    ('Sopa de verduras','Sopa ligera de vegetales variados.',4.50, 45, 2, 8, 2, 0, 0, 0, 0, 0,
+    ARRAY['100g zapallo (½ taza en cubos)', '50g zanahoria (½ unidad)', '30g cebolla (2 cucharadas picadas)', '20g apio (2 ramitas)', '750ml agua (3 tazas)']),
+
     -- Aumentar Masa Muscular (plan_id = 3)
-    ('Pechuga de pollo con arroz integral', 'Plato alto en proteínas y carbohidratos complejos.', 9.00, 140, 16, 16, 2, 1, 1, 0, 0, 40),
-    ('Omelette de claras', 'Omelette de claras de huevo con espinaca.', 6.00, 70, 11, 2, 1, 0, 1, 0, 0, 0),
+    ('Pechuga de pollo con arroz integral', 'Plato alto en proteínas y carbohidratos complejos.', 9.00, 140, 16, 16, 2, 1, 1, 0, 0, 40,
+    ARRAY['150g pechuga de pollo (1 unidad grande)', '100g arroz integral cocido (½ taza)', '50g brócoli (½ taza)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal y pimienta']),
+    
+    ('Omelette de claras','Omelette de claras de huevo con espinaca.',6.00, 70, 11, 2, 1, 0, 1, 0, 0, 0,
+    ARRAY['4 claras de huevo (120g)', '30g espinaca (1 taza cruda)', '10g cebolla (1 cucharada picada)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal']),
+
     -- Bajar Grasa Corporal (plan_id = 4)
-    ('Pescado al vapor con brócoli', 'Pescado magro al vapor acompañado de brócoli.', 10.00, 90, 13, 3, 2, 0, 1, 0, 0, 35),
-    ('Ensalada de atún', 'Ensalada baja en calorías con atún y vegetales.', 7.50, 100, 12, 4, 2, 1, 1, 0, 0, 25),
+    ('Pescado al vapor con brócoli', 'Pescado magro al vapor acompañado de brócoli.', 10.00, 90, 13, 3, 2, 0, 1, 0, 0, 35,
+    ARRAY['150g pescado blanco (1 filete mediano)', '100g brócoli cocido (1 taza)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal y limón al gusto']),
+    
+    ('Ensalada de atún', 'Ensalada baja en calorías con atún y vegetales.', 7.50, 100, 12, 4, 2, 1, 1, 0, 0, 25,
+    ARRAY['80g atún al agua (½ lata)', '30g lechuga (1 taza picada)', '50g tomate (½ unidad)', '20g zanahoria rallada (2 cucharadas)', '10ml aceite de oliva (1 cucharada)']),
+
     -- Mantenimiento (plan_id = 5)
-    ('Pollo grillado con quinoa', 'Pollo grillado acompañado de quinoa y vegetales.', 8.50, 130, 14, 12, 2, 1, 1, 0, 0, 35),
-    ('Wrap integral de pavo', 'Wrap de pan integral con pavo y vegetales.', 6.50, 160, 10, 22, 3, 2, 2, 0, 0, 20);
+    ('Pollo grillado con quinoa', 'Pollo grillado acompañado de quinoa y vegetales.', 8.50, 130, 14, 12, 2, 1, 1, 0, 0, 35,
+    ARRAY['150g pollo grillado (1 unidad)','100g quinoa cocida (½ taza)','50g zanahoria (½ unidad)','30g pimiento rojo (3 cucharadas picadas)','10ml aceite de oliva (1 cucharada)']),
+    
+    ('Wrap integral de pavo', 'Wrap de pan integral con pavo y vegetales.', 6.50, 160, 10, 22, 3, 2, 2, 0, 0, 20,
+    ARRAY['1 wrap de pan integral (60g)','80g pavo cocido (2 fetas gruesas)','30g lechuga (1 taza picada)','30g tomate (2 rodajas)','10g mayonesa light (1 cucharada)']);
 
 
 -- Create table 'plans'
