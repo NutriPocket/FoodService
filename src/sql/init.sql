@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS foods (
     trans_fats_per_100g SMALLINT,
     cholesterol_per_100g SMALLINT,
     ingredients TEXT[],
+    image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

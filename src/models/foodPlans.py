@@ -182,6 +182,11 @@ class FoodDTO(BaseModel):
         title="Ingredients",
         description="List of ingredients with recommended quantities and home measurements"
     )
+    image_url: Optional[str] = Field(
+        None,
+        title="url",
+        description="link to the image"
+    )
 
 
 class Food(FoodDTO):

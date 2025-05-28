@@ -86,7 +86,7 @@ class IFoodRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save_food(self, food: FoodDTO) -> Plan:
+    def save_food(self, food: FoodDTO) -> Food:
         pass
 
     @abstractmethod
@@ -404,7 +404,8 @@ class FoodRepository(IFoodRepository):
                 monounsaturated_fats_per_100g,
                 polyunsaturated_fats_per_100g,
                 trans_fats_per_100g,
-                cholesterol_per_100g
+                cholesterol_per_100g,
+                image_url
             FROM foods
             WHERE id = :food_id
         """)
@@ -439,20 +440,20 @@ class FoodRepository(IFoodRepository):
 
             return [Food(**row._mapping) for row in result]
 
-    def save_food(self, food: FoodDTO) -> Plan:
+    def save_food(self, food: FoodDTO) -> Food:
         query = text("""
             INSERT INTO foods (name, description, price, calories_per_100g, 
             protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
             monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g)
+            trans_fats_per_100g, cholesterol_per_100g, image_url)
             VALUES (:name, :description, :price, :calories_per_100g, :protein_per_100g, 
             :carbs_per_100g, :fiber_per_100g, :saturated_fats_per_100g, 
             :monounsaturated_fats_per_100g, :polyunsaturated_fats_per_100g, 
-            :trans_fats_per_100g, :cholesterol_per_100g)
+            :trans_fats_per_100g, :cholesterol_per_100g, :image_url)
             RETURNING id, name, description, price, calories_per_100g, protein_per_100g, 
             carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
             monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g, created_at
+            trans_fats_per_100g, cholesterol_per_100g, image_url, created_at
         """)
 
         params = {
@@ -467,7 +468,8 @@ class FoodRepository(IFoodRepository):
             "monounsaturated_fats_per_100g": food.monounsaturated_fats_per_100g,
             "polyunsaturated_fats_per_100g": food.polyunsaturated_fats_per_100g,
             "trans_fats_per_100g": food.trans_fats_per_100g,
-            "cholesterol_per_100g": food.cholesterol_per_100g
+            "cholesterol_per_100g": food.cholesterol_per_100g,
+            "image_url": food.image_url
         }
 
         with self.engine.begin() as connection:
