@@ -14,63 +14,149 @@ $do$;
 -- Connect to the newly created database
 \c database
 
+-- Create the table 'ingredients'
+CREATE TABLE ingredients (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  measure_type VARCHAR(50) NOT NULL,
+  calories FLOAT NOT NULL,
+  protein FLOAT NOT NULL,
+  carbs FLOAT NOT NULL,
+  fiber FLOAT NOT NULL,
+  saturated_fats FLOAT NOT NULL,
+  monounsaturated_fats FLOAT NOT NULL,
+  polyunsaturated_fats FLOAT NOT NULL,
+  trans_fats FLOAT NOT NULL,
+  cholesterol FLOAT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+INSERT INTO ingredients (name, measure_type, calories, protein, carbs, fiber, saturated_fats, monounsaturated_fats, polyunsaturated_fats, trans_fats, cholesterol) VALUES
+('Pasta cocida', 'gram', 130, 5, 25, 2, 0.2, 0.1, 0.1, 0, 0),
+('Crema', 'gram', 350, 2.1, 3, 0, 20, 10, 5, 0, 30),
+('Pechuga de pollo', 'gram', 165, 31, 0, 0, 1, 1.2, 0.4, 0, 85),
+('Queso parmesano', 'gram', 431, 38, 4, 0, 29, 9, 1, 0, 88),
+('Aceite de oliva', 'gram', 884, 0, 0, 0, 14, 73, 11, 0, 0),
+('Leche entera', 'gram', 60, 3.2, 5, 0, 1.9, 0.7, 0.1, 0, 14),
+('Banana', 'gram', 89, 1.1, 23, 2.6, 0.1, 0, 0, 0, 0),
+('Avena', 'gram', 389, 17, 66, 11, 1.2, 3.4, 2.5, 0, 0),
+('Miel', 'gram', 304, 0.3, 82, 0.2, 0, 0, 0, 0, 0),
+('Frutillas', 'gram', 32, 0.7, 7.7, 2, 0.015, 0.04, 0.05, 0, 0),
+('Lechuga', 'gram', 15, 1.4, 2.9, 1.3, 0.02, 0.05, 0.03, 0, 0),
+('Tomate', 'gram', 18, 0.9, 3.9, 1.2, 0.03, 0.01, 0.17, 0, 0),
+('Jugo de limón', 'gram', 22, 0.4, 7, 0.3, 0, 0, 0, 0, 0),
+('Zanahoria', 'gram', 41, 0.9, 10, 2.8, 0.03, 0.02, 0.05, 0, 0),
+('Cebolla', 'gram', 40, 1.1, 9.3, 1.7, 0.02, 0.01, 0.03, 0, 0),
+('Apio', 'gram', 16, 0.7, 3, 1.6, 0.02, 0.01, 0.04, 0, 0),
+('Zapallo', 'gram', 26, 1, 7, 1, 0.02, 0.01, 0.01, 0, 0),
+('Agua', 'gram', 0, 0, 0, 0, 0, 0, 0, 0, 0),
+('Pescado blanco', 'gram', 90, 20, 0, 0, 1, 2, 0.5, 0, 50),
+('Brócoli', 'gram', 34, 2.8, 7, 2.6, 0.04, 0.01, 0.04, 0, 0),
+('Atún al agua', 'gram', 116, 26, 0, 0, 0.7, 0.8, 0.3, 0, 50),
+('Quinoa cocida', 'gram', 120, 4.1, 21, 2.8, 0.13, 0.43, 0.58, 0, 0),
+('Pavo cocido', 'gram', 135, 29, 0, 0, 0.5, 0.6, 0.3, 0, 60),
+('Mayonesa light', 'gram', 140, 0, 1, 0, 5, 7, 2, 0, 10),
+('Pan integral', 'gram', 250, 9, 43, 7, 0.5, 1.5, 0.7, 0, 0),
+('Claras de huevo', 'unit', 17, 3.6, 0, 0, 0, 0, 0, 0, 0),
+('Espinaca', 'gram', 23, 2.9, 3.6, 2.2, 0.06, 0.01, 0.02, 0, 0);
+
 -- Create the table 'foods'
 CREATE TABLE IF NOT EXISTS foods (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price NUMERIC(10, 2) NOT NULL,
-    calories_per_100g INT,
-    protein_per_100g SMALLINT,
-    carbs_per_100g SMALLINT,
-    fiber_per_100g SMALLINT,
-    saturated_fats_per_100g SMALLINT,
-    monounsaturated_fats_per_100g SMALLINT,
-    polyunsaturated_fats_per_100g SMALLINT,
-    trans_fats_per_100g SMALLINT,
-    cholesterol_per_100g SMALLINT,
-    ingredients TEXT[],
     image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO foods ( name, description, price, calories_per_100g, protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, monounsaturated_fats_per_100g,
-    polyunsaturated_fats_per_100g, trans_fats_per_100g, cholesterol_per_100g, ingredients) VALUES
-    
-    -- Subir de Peso (plan_id = 1)
-    ('Pasta con salsa cremosa', 'Pasta con salsa de crema y pollo, alto en calorías.', 8.50, 180, 7, 28, 2, 3, 2, 1, 0, 25,
-    ARRAY['100g pasta cocida (¾ taza)', '50g crema (3 cucharadas)', '150g pechuga de pollo (1 unidad pequeña)', '5g queso parmesano (1 cucharada)', '5ml aceite de oliva (1 cucharadita)']),
-    
-    ('Batido de frutas y avena', 'Batido energético con frutas, avena y leche entera.', 5.00, 110, 5, 18, 2, 1, 1, 0, 0, 10,
-    ARRAY['100ml leche entera (½ taza)', '50g banana (½ unidad)', '30g avena (3 cucharadas)', '10g miel (1 cucharada)', '50g frutillas (3 unidades medianas)']),
+INSERT INTO foods (name, description, price, image_url)
+VALUES
+('Pasta con salsa cremosa', 'Pasta con salsa de crema y pollo, alto en calorías.', 8.50, NULL),
+('Batido de frutas y avena', 'Batido energético con frutas, avena y leche entera.', 5.00, NULL),
+('Ensalada de pollo', 'Ensalada fresca con pechuga de pollo a la plancha.', 7.00, NULL),
+('Sopa de verduras','Sopa ligera de vegetales variados.',4.50, NULL),
+('Pechuga de pollo con arroz integral', 'Plato alto en proteínas y carbohidratos complejos.', 9.00, NULL),
+('Omelette de claras','Omelette de claras de huevo con espinaca.',6.00, NULL),
+('Pescado al vapor con brócoli', 'Pescado magro al vapor acompañado de brócoli.', 10.00, NULL),
+('Ensalada de atún', 'Ensalada baja en calorías con atún y vegetales.', 7.50, NULL),
+('Pollo grillado con quinoa', 'Pollo grillado acompañado de quinoa y vegetales.', 8.50, NULL),
+('Wrap integral de pavo', 'Wrap de pan integral con pavo y vegetales.', 6.50, NULL);
 
-    -- Bajar de Peso (plan_id = 2)
-    ('Ensalada de pollo', 'Ensalada fresca con pechuga de pollo a la plancha.', 7.00, 90, 12, 4, 2, 1, 1, 0, 0, 30,
-    ARRAY['120g pechuga de pollo (1 unidad mediana)', '30g lechuga (1 taza picada)', '50g tomate (½ unidad)', '10ml aceite de oliva (1 cucharada)', '5ml jugo de limón (1 cucharadita)']),
-    
-    ('Sopa de verduras','Sopa ligera de vegetales variados.',4.50, 45, 2, 8, 2, 0, 0, 0, 0, 0,
-    ARRAY['100g zapallo (½ taza en cubos)', '50g zanahoria (½ unidad)', '30g cebolla (2 cucharadas picadas)', '20g apio (2 ramitas)', '750ml agua (3 tazas)']),
+-- Create the table 'food_ingredients'
+CREATE TABLE IF NOT EXISTS food_ingredients (
+    food_id INT NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
+    ingredient_id INT NOT NULL REFERENCES ingredients(id) ON DELETE CASCADE,
+    quantity FLOAT NOT NULL, -- en gramos o unidades según measure_type
+    PRIMARY KEY(food_id, ingredient_id)
+);
 
-    -- Aumentar Masa Muscular (plan_id = 3)
-    ('Pechuga de pollo con arroz integral', 'Plato alto en proteínas y carbohidratos complejos.', 9.00, 140, 16, 16, 2, 1, 1, 0, 0, 40,
-    ARRAY['150g pechuga de pollo (1 unidad grande)', '100g arroz integral cocido (½ taza)', '50g brócoli (½ taza)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal y pimienta']),
-    
-    ('Omelette de claras','Omelette de claras de huevo con espinaca.',6.00, 70, 11, 2, 1, 0, 1, 0, 0, 0,
-    ARRAY['4 claras de huevo (120g)', '30g espinaca (1 taza cruda)', '10g cebolla (1 cucharada picada)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal']),
+-- Pasta con salsa cremosa (food_id=1)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Pasta con salsa cremosa'), (SELECT id FROM ingredients WHERE name = 'Pasta cocida'), 100),
+((SELECT id FROM foods WHERE name = 'Pasta con salsa cremosa'), (SELECT id FROM ingredients WHERE name = 'Crema'), 50),
+((SELECT id FROM foods WHERE name = 'Pasta con salsa cremosa'), (SELECT id FROM ingredients WHERE name = 'Pechuga de pollo'), 150),
+((SELECT id FROM foods WHERE name = 'Pasta con salsa cremosa'), (SELECT id FROM ingredients WHERE name = 'Queso parmesano'), 5),
+((SELECT id FROM foods WHERE name = 'Pasta con salsa cremosa'), (SELECT id FROM ingredients WHERE name = 'Aceite de oliva'), 5);
 
-    -- Bajar Grasa Corporal (plan_id = 4)
-    ('Pescado al vapor con brócoli', 'Pescado magro al vapor acompañado de brócoli.', 10.00, 90, 13, 3, 2, 0, 1, 0, 0, 35,
-    ARRAY['150g pescado blanco (1 filete mediano)', '100g brócoli cocido (1 taza)', '5ml aceite de oliva (1 cucharadita)', '1 pizca de sal y limón al gusto']),
-    
-    ('Ensalada de atún', 'Ensalada baja en calorías con atún y vegetales.', 7.50, 100, 12, 4, 2, 1, 1, 0, 0, 25,
-    ARRAY['80g atún al agua (½ lata)', '30g lechuga (1 taza picada)', '50g tomate (½ unidad)', '20g zanahoria rallada (2 cucharadas)', '10ml aceite de oliva (1 cucharada)']),
+-- Batido de frutas y avena (food_id=2)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Batido de frutas y avena'), (SELECT id FROM ingredients WHERE name = 'Leche entera'), 100),
+((SELECT id FROM foods WHERE name = 'Batido de frutas y avena'), (SELECT id FROM ingredients WHERE name = 'Banana'), 50),
+((SELECT id FROM foods WHERE name = 'Batido de frutas y avena'), (SELECT id FROM ingredients WHERE name = 'Avena'), 30),
+((SELECT id FROM foods WHERE name = 'Batido de frutas y avena'), (SELECT id FROM ingredients WHERE name = 'Miel'), 10),
+((SELECT id FROM foods WHERE name = 'Batido de frutas y avena'), (SELECT id FROM ingredients WHERE name = 'Frutillas'), 50);
 
-    -- Mantenimiento (plan_id = 5)
-    ('Pollo grillado con quinoa', 'Pollo grillado acompañado de quinoa y vegetales.', 8.50, 130, 14, 12, 2, 1, 1, 0, 0, 35,
-    ARRAY['150g pollo grillado (1 unidad)','100g quinoa cocida (½ taza)','50g zanahoria (½ unidad)','30g pimiento rojo (3 cucharadas picadas)','10ml aceite de oliva (1 cucharada)']),
-    
-    ('Wrap integral de pavo', 'Wrap de pan integral con pavo y vegetales.', 6.50, 160, 10, 22, 3, 2, 2, 0, 0, 20,
-    ARRAY['1 wrap de pan integral (60g)','80g pavo cocido (2 fetas gruesas)','30g lechuga (1 taza picada)','30g tomate (2 rodajas)','10g mayonesa light (1 cucharada)']);
+-- Ensalada de pollo (food_id=3)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Ensalada de pollo'), (SELECT id FROM ingredients WHERE name = 'Pechuga de pollo'), 120),
+((SELECT id FROM foods WHERE name = 'Ensalada de pollo'), (SELECT id FROM ingredients WHERE name = 'Lechuga'), 30),
+((SELECT id FROM foods WHERE name = 'Ensalada de pollo'), (SELECT id FROM ingredients WHERE name = 'Tomate'), 50),
+((SELECT id FROM foods WHERE name = 'Ensalada de pollo'), (SELECT id FROM ingredients WHERE name = 'Aceite de oliva'), 10),
+((SELECT id FROM foods WHERE name = 'Ensalada de pollo'), (SELECT id FROM ingredients WHERE name = 'Jugo de limón'), 5);
+
+-- Sopa de verduras (food_id=4)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Sopa de verduras'), (SELECT id FROM ingredients WHERE name = 'Zapallo'), 100),
+((SELECT id FROM foods WHERE name = 'Sopa de verduras'), (SELECT id FROM ingredients WHERE name = 'Zanahoria'), 50),
+((SELECT id FROM foods WHERE name = 'Sopa de verduras'), (SELECT id FROM ingredients WHERE name = 'Cebolla'), 30),
+((SELECT id FROM foods WHERE name = 'Sopa de verduras'), (SELECT id FROM ingredients WHERE name = 'Apio'), 20),
+((SELECT id FROM foods WHERE name = 'Sopa de verduras'), (SELECT id FROM ingredients WHERE name = 'Agua'), 750);
+
+-- Pechuga de pollo con arroz integral (food_id=5)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Pechuga de pollo con arroz integral'), (SELECT id FROM ingredients WHERE name = 'Pechuga de pollo'), 150),
+((SELECT id FROM foods WHERE name = 'Pechuga de pollo con arroz integral'), (SELECT id FROM ingredients WHERE name = 'Pan integral'), 100);
+
+-- Omelette de claras (food_id=6)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Omelette de claras'), (SELECT id FROM ingredients WHERE name = 'Claras de huevo'), 3),
+((SELECT id FROM foods WHERE name = 'Omelette de claras'), (SELECT id FROM ingredients WHERE name = 'Espinaca'), 40);
+
+-- Pescado al vapor con brócoli (food_id=7)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Pescado al vapor con brócoli'), (SELECT id FROM ingredients WHERE name = 'Pescado blanco'), 150),
+((SELECT id FROM foods WHERE name = 'Pescado al vapor con brócoli'), (SELECT id FROM ingredients WHERE name = 'Brócoli'), 100);
+
+-- Ensalada de atún (food_id=8)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Ensalada de atún'), (SELECT id FROM ingredients WHERE name = 'Atún al agua'), 120),
+((SELECT id FROM foods WHERE name = 'Ensalada de atún'), (SELECT id FROM ingredients WHERE name = 'Lechuga'), 30),
+((SELECT id FROM foods WHERE name = 'Ensalada de atún'), (SELECT id FROM ingredients WHERE name = 'Tomate'), 50),
+((SELECT id FROM foods WHERE name = 'Ensalada de atún'), (SELECT id FROM ingredients WHERE name = 'Aceite de oliva'), 10);
+
+-- Pollo grillado con quinoa (food_id=9)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Pollo grillado con quinoa'), (SELECT id FROM ingredients WHERE name = 'Pechuga de pollo'), 150),
+((SELECT id FROM foods WHERE name = 'Pollo grillado con quinoa'), (SELECT id FROM ingredients WHERE name = 'Quinoa cocida'), 100),
+((SELECT id FROM foods WHERE name = 'Pollo grillado con quinoa'), (SELECT id FROM ingredients WHERE name = 'Brócoli'), 50);
+
+-- Wrap integral de pavo (food_id=10)
+INSERT INTO food_ingredients (food_id, ingredient_id, quantity) VALUES
+((SELECT id FROM foods WHERE name = 'Wrap integral de pavo'), (SELECT id FROM ingredients WHERE name = 'Pan integral'), 80),
+((SELECT id FROM foods WHERE name = 'Wrap integral de pavo'), (SELECT id FROM ingredients WHERE name = 'Pavo cocido'), 100),
+((SELECT id FROM foods WHERE name = 'Wrap integral de pavo'), (SELECT id FROM ingredients WHERE name = 'Lechuga'), 20),
+((SELECT id FROM foods WHERE name = 'Wrap integral de pavo'), (SELECT id FROM ingredients WHERE name = 'Mayonesa light'), 10);
 
 
 -- Create table 'plans'

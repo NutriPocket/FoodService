@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
@@ -69,7 +69,7 @@ class IFoodService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_ingredients(self, food_id: int) -> Optional[list[str]]:
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         pass
 
 class FoodService(IFoodService):
@@ -295,10 +295,13 @@ class FoodService(IFoodService):
 
         return _ret
 
-    def get_ingredients(self, food_id: int) -> list[str]:
-        ingredients = self.repository.get_ingredients_by_food_id(food_id)
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
+        saved_ingredient = self.repository.save_ingredient(ingredient)
 
-        if not ingredients:
-            raise NotFoundError(f"Ingredients for food with id {food_id} not found")
+        if not saved_ingredient:
+            raise Exception("Failed to save ingredient")
 
-        return ingredients
+        return saved_ingredient
+
+    def get_food_nutritional_values(self, food_id: int) -> Optional[dict]:
+        return self.repository.get_nutritional_values(food_id)

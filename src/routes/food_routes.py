@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, status
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
+from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
 from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody
 from models.response import CustomResponse, ErrorDTO
 
@@ -424,6 +424,32 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
     )
     return FoodController().add_food_in_db(body.food)
 
+@router.post(
+    "/food/ingredients",
+    summary="Create a new ingredient",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[Ingredient],
+            "description": "New ingredient created"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def post_ingredient(body: IngredientDTO) -> CustomResponse[Ingredient]:
+    return FoodController().add_ingredient(body)
+
 @router.get(
     "/foods/{food_id}/ingredients",
     summary="Get ingredients for a specific food item",
@@ -452,4 +478,8 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
     }
 )
 def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[str]]:
-    return FoodController().get_ingredients_by_food_id(food_id)
+    return 0
+
+@router.get("/foods/{food_id}/nutrition")
+def get_food_nutrition(food_id: int):
+    return FoodController().get_nutritional_values(food_id)

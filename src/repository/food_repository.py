@@ -3,7 +3,7 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from sqlalchemy.exc import IntegrityError
 
@@ -90,7 +90,7 @@ class IFoodRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         pass
 
 
@@ -480,21 +480,91 @@ class FoodRepository(IFoodRepository):
 
             return Food(**result._mapping)
     
-    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         query = text("""
-            SELECT ingredients
-            FROM foods
-            WHERE id = :food_id
-            LIMIT 1
+            INSERT INTO ingredients (
+                name,
+                measure_type,
+                calories,
+                protein,
+                carbs,
+                fiber,
+                saturated_fats,
+                monounsaturated_fats,
+                polyunsaturated_fats,
+                trans_fats,
+                cholesterol
+            )
+            VALUES (
+                :name,
+                :measure_type,
+                :calories,
+                :protein,
+                :carbs,
+                :fiber,
+                :saturated_fats,
+                :monounsaturated_fats,
+                :polyunsaturated_fats,
+                :trans_fats,
+                :cholesterol
+            )
+            RETURNING
+                id,
+                name,
+                measure_type,
+                calories,
+                protein,
+                carbs,
+                fiber,
+                saturated_fats,
+                monounsaturated_fats,
+                polyunsaturated_fats,
+                trans_fats,
+                cholesterol,
+                created_at
         """)
 
-        params = {"food_id": food_id}
+        params = {
+            "name": ingredient.name,
+            "measure_type": ingredient.measure_type.value,  # assuming MeasureType is Enum
+            "calories": ingredient.calories,
+            "protein": ingredient.protein,
+            "carbs": ingredient.carbs,
+            "fiber": ingredient.fiber,
+            "saturated_fats": ingredient.saturated_fats,
+            "monounsaturated_fats": ingredient.monounsaturated_fats,
+            "polyunsaturated_fats": ingredient.polyunsaturated_fats,
+            "trans_fats": ingredient.trans_fats,
+            "cholesterol": ingredient.cholesterol,
+        }
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchone()
 
-            if result:
-                return result[0]
+            if not result:
+                raise Exception("Error saving ingredient")
 
-        return None
+            return Ingredient(**result._mapping)
             
+    def get_nutritional_values(self, food_id: int) -> Optional[dict]:
+        query = text("""
+            SELECT 
+                SUM(i.calories * fi.quantity / 100.0) AS calories,
+                SUM(i.protein * fi.quantity / 100.0) AS protein,
+                SUM(i.carbs * fi.quantity / 100.0) AS carbs,
+                SUM(i.fiber * fi.quantity / 100.0) AS fiber,
+                SUM(i.saturated_fats * fi.quantity / 100.0) AS saturated_fats,
+                SUM(i.monounsaturated_fats * fi.quantity / 100.0) AS monounsaturated_fats,
+                SUM(i.polyunsaturated_fats * fi.quantity / 100.0) AS polyunsaturated_fats,
+                SUM(i.trans_fats * fi.quantity / 100.0) AS trans_fats,
+                SUM(i.cholesterol * fi.quantity / 100.0) AS cholesterol
+            FROM food_ingredients fi
+            JOIN ingredients i ON fi.ingredient_id = i.id
+            WHERE fi.food_id = :food_id
+            GROUP BY fi.food_id
+        """)
+        with self.engine.connect() as conn:
+            result = conn.execute(query, {"food_id": food_id}).fetchone()
+            if result is None:
+                return None
+            return dict(result._mapping)

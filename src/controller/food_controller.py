@@ -1,10 +1,9 @@
 from typing import Optional
-
 from models.params import GetAllFoodsParams
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
-
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
+from fastapi import Path
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
@@ -83,7 +82,12 @@ class FoodController:
         _foods = self.service.save_food_in_db(food)
         return CustomResponse(data=_foods)
 
-    def get_ingredients_by_food_id(self, food_id: int) -> CustomResponse[list[str]]:
-        _ingredients = self.service.get_ingredients(food_id)
-    
-        return CustomResponse(data=_ingredients)
+    def add_ingredient(self, ingredient: IngredientDTO) -> CustomResponse[Ingredient]:
+        _ingredient = self.service.save_ingredient(ingredient)
+        return CustomResponse(data=_ingredient)
+
+    def get_nutritional_values(self, food_id: int = Path(..., description="ID de la comida")) -> CustomResponse[dict]:
+        nutrition = self.service.get_food_nutritional_values(food_id)
+        if nutrition is None:
+            raise HTTPException(status_code=404, detail="Food not found or has no nutritional data")
+        return CustomResponse(data=nutrition)
