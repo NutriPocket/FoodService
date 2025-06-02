@@ -3,7 +3,7 @@ from typing import Optional
 from models.params import GetAllFoodsParams
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment, ExtraFoodDTO, ExtraFood
 
 
 class FoodController:
@@ -87,3 +87,7 @@ class FoodController:
         _ingredients = self.service.get_ingredients(food_id)
     
         return CustomResponse(data=_ingredients)
+    
+    def add_extra_food(self, food: ExtraFoodDTO, userId: str)  -> CustomResponse[ExtraFood]:
+        _extraFoods = self.service.save_extra_food(self, food, userId)
+        return CustomResponse(data=_extraFoods)

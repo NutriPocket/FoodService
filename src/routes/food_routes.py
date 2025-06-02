@@ -2,8 +2,8 @@ from fastapi import APIRouter, Query, status
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
-from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody
+from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
+from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody, PostExtraFoodBody
 from models.response import CustomResponse, ErrorDTO
 
 router = APIRouter()
@@ -453,3 +453,34 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
 )
 def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[str]]:
     return FoodController().get_ingredients_by_food_id(food_id)
+
+@router.post(
+    "/users/{user_id}/extrafood",
+    summary="Add a extra food in a user at specific day",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[Food],
+            "description": "List of foods"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def post_extra_food(body: PostExtraFoodBody, user_id: str) -> CustomResponse[ExtraFood]:
+    if not (body.food and user_id):
+        raise ValidationError(
+            detail="If you want to create a extra food from scratch, you need to provide a user id and a long list of params...",
+            title="Missing body or wrong body")
+    return FoodController().add_extra_food(body.food, user_id) 
+

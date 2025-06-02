@@ -133,6 +133,26 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
     FOREIGN KEY (meal_moment_id) REFERENCES meal_moments(id) ON DELETE CASCADE
 );
 
+-- Table 'Extra Foods'
+CREATE TABLE IF NOT EXISTS extra_foods (
+    id_extra_food SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    ingredients TEXT[] NOT NULL,
+    image_url VARCHAR(255),
+    day VARCHAR(255) NOT NULL,
+    moment VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS extrafoodplanlink (
+    id_extra_food INTEGER NOT NULL,
+    id_user INTEGER NOT NULL,
+    PRIMARY KEY (id_extra_food, id_user),
+    FOREIGN KEY (id_extra_food) REFERENCES extra_foods(id_extra_food) ON DELETE CASCADE,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+);
+
 -- Link foods used in Plan 1 (Subir de Peso)
 -- INSERT INTO foodplanlink (food_id, plan_id, day_id, meal_moment_id, updated_at) VALUES
 -- (1, 1, NOW()),  -- Pasta con salsa cremosa

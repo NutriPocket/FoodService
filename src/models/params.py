@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 
-from models.foodPlans import FoodPreferenceRequest, PlanDTO, FoodDTO
+from models.foodPlans import FoodPreferenceRequest, PlanDTO, FoodDTO, ExtraFoodDTO
 
 
 class PostPlanBody(BaseModel):
@@ -29,4 +29,11 @@ class PostFoodBody(BaseModel):
         None,
         title="Food",
         description="Food object to be created",
+    )
+
+class PostExtraFoodBody(BaseModel):
+    food: Optional[ExtraFoodDTO] = Field(
+        None,
+        title="Extra Food",
+        description="Extra Food object to be created",
     )

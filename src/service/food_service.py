@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFoodDTO, ExtraFood
 from models.params import GetAllFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
@@ -70,6 +70,10 @@ class IFoodService(metaclass=ABCMeta):
 
     @abstractmethod
     def get_ingredients(self, food_id: int) -> Optional[list[str]]:
+        pass
+    
+    @abstractmethod
+    def save_extra_food(self, food: ExtraFoodDTO) -> ExtraFood:
         pass
 
 class FoodService(IFoodService):
@@ -262,6 +266,13 @@ class FoodService(IFoodService):
     
     def save_food_in_db(self, food: FoodDTO) -> Food:
         return self.repository.save_food(food)
+    
+    def save_extra_food(self, food: ExtraFoodDTO, userId: str)-> ExtraFood:
+        extra_food: ExtraFood = self.repository.save_extra_food(food, userId)
+        link = self.link_extra_food_with_user(extra_food.id, int(userId))
+        if not link:
+            raise NotFoundError("user id invalid")
+        return extra_food
 
     def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:
         food_id_placeholders = [str(int(fid)) for fid in preferences]

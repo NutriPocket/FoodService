@@ -3,7 +3,7 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
 from models.params import GetAllFoodsParams
 from sqlalchemy.exc import IntegrityError
 
@@ -93,6 +93,13 @@ class IFoodRepository(metaclass=ABCMeta):
     def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
         pass
 
+    @abstractmethod
+    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
+        pass
+    
+    @abstractmethod
+    def link_extra_food_with_user(self, extraFoodId: int, userid: int) -> None:
+        pass
 
 class FoodRepository(IFoodRepository):
     def __init__(self, engine_: Optional[Engine] = None):
@@ -497,4 +504,42 @@ class FoodRepository(IFoodRepository):
                 return result[0]
 
         return None
-            
+
+    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
+        query = text("""
+            INSERT INTO extra_foods(name, description, ingredients, image_url, day, moment)
+            VALUES (:name, :description, :ingredients, :image_url, :day, :moment)
+            RETURNING id_extra_food, name, description, ingredients, image_url, day, moment, created_at """)
+
+        params = {
+            "name": food.name,
+            "description": food.description,
+            "ingredients": food.ingredients,
+            "image_url": food.image_url,
+            "day": food.day,
+            "moment": food.moment
+        }
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+
+            if not result:
+                raise Exception("Error saving extra food")
+
+            return ExtraFood(**result._mapping)
+    
+    def link_extra_food_with_user(self, extraFoodId: int, userid: int) -> None:
+        query = text("""
+            INSERT INTO extrafoodplanlink (id_extra_food, id_user)
+            VALUES (:id_extra_food, :id_user)
+        """)
+
+        params = {
+            "id_extra_food": extraFoodId,
+            "id_user": userid
+        }
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+            if not result:
+                raise Exception("Error linking the food with user")
