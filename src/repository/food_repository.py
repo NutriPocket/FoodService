@@ -396,15 +396,6 @@ class FoodRepository(IFoodRepository):
                 description, 
                 price, 
                 created_at,
-                calories_per_100g,
-                protein_per_100g,
-                carbs_per_100g,
-                fiber_per_100g,
-                saturated_fats_per_100g,
-                monounsaturated_fats_per_100g,
-                polyunsaturated_fats_per_100g,
-                trans_fats_per_100g,
-                cholesterol_per_100g,
                 image_url
             FROM foods
             WHERE id = :food_id
