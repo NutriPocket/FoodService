@@ -2,7 +2,7 @@ from typing import Optional
 from models.params import GetAllFoodsParams
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
 from fastapi import Path
 
 class FoodController:
@@ -91,3 +91,6 @@ class FoodController:
         if nutrition is None:
             raise HTTPException(status_code=404, detail="Food not found or has no nutritional data")
         return CustomResponse(data=nutrition)
+    
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        return self.service.get_ingredients_by_food_id(food_id)

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query, status
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
+from models.foodPlans import Food, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
 from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody
 from models.response import CustomResponse, ErrorDTO
 
@@ -477,8 +477,14 @@ def post_ingredient(body: IngredientDTO) -> CustomResponse[Ingredient]:
         },
     }
 )
-def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[str]]:
-    return 0
+def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[FoodIngredientDTO]]:
+    ingredients = FoodController().get_ingredients_by_food_id(food_id)
+    if not ingredients:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No ingredients found for food with ID {food_id}"
+        )
+    return CustomResponse(data=ingredients)
 
 @router.get("/foods/{food_id}/nutrition")
 def get_food_nutrition(food_id: int):

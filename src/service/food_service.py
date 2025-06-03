@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
@@ -305,3 +305,6 @@ class FoodService(IFoodService):
 
     def get_food_nutritional_values(self, food_id: int) -> Optional[dict]:
         return self.repository.get_nutritional_values(food_id)
+    
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        return self.repository.get_ingredients_by_food_id(food_id)

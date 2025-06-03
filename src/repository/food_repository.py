@@ -3,9 +3,10 @@ from typing import Any, Optional, Sequence
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
 from models.params import GetAllFoodsParams
 from sqlalchemy.exc import IntegrityError
+from models.foodPlans import MeasureType
 
 
 class IFoodRepository(metaclass=ABCMeta):
@@ -559,3 +560,47 @@ class FoodRepository(IFoodRepository):
             if result is None:
                 return None
             return dict(result._mapping)
+
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        query = text("""
+            SELECT 
+                i.name,
+                i.measure_type,
+                i.calories,
+                i.protein,
+                i.carbs,
+                i.fiber,
+                i.saturated_fats,
+                i.monounsaturated_fats,
+                i.polyunsaturated_fats,
+                i.trans_fats,
+                i.cholesterol,
+                fi.quantity
+            FROM food_ingredients fi
+            JOIN ingredients i ON fi.ingredient_id = i.id
+            WHERE fi.food_id = :food_id
+        """)
+
+        with engine.connect() as conn:
+            result = conn.execute(query, {"food_id": food_id})
+            rows = result.fetchall()
+
+        return [
+            FoodIngredientDTO(
+                ingredient=IngredientDTO(
+                    name=row[0],
+                    measure_type=MeasureType(row[1]),
+                    calories=row[2],
+                    protein=row[3],
+                    carbs=row[4],
+                    fiber=row[5],
+                    saturated_fats=row[6],
+                    monounsaturated_fats=row[7],
+                    polyunsaturated_fats=row[8],
+                    trans_fats=row[9],
+                    cholesterol=row[10]
+                ),
+                quantity=row[11]
+            )
+            for row in rows
+        ]
