@@ -71,10 +71,11 @@ class IFoodService(metaclass=ABCMeta):
     @abstractmethod
     def get_ingredients(self, food_id: int) -> Optional[list[str]]:
         pass
-    
+
     @abstractmethod
     def save_extra_food(self, food: ExtraFoodDTO) -> ExtraFood:
         pass
+
 
 class FoodService(IFoodService):
     def __init__(self, repository: Optional[IFoodRepository] = None):
@@ -263,13 +264,13 @@ class FoodService(IFoodService):
 
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         return self.repository.get_all_foods(params)
-    
+
     def save_food_in_db(self, food: FoodDTO) -> Food:
         return self.repository.save_food(food)
-    
-    def save_extra_food(self, food: ExtraFoodDTO, userId: str)-> ExtraFood:
+
+    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
         extra_food: ExtraFood = self.repository.save_extra_food(food, userId)
-        link = self.link_extra_food_with_user(extra_food.id, int(userId))
+        link = self.link_extra_food_with_user(extra_food.id, userId)
         if not link:
             raise NotFoundError("user id invalid")
         return extra_food
@@ -310,6 +311,7 @@ class FoodService(IFoodService):
         ingredients = self.repository.get_ingredients_by_food_id(food_id)
 
         if not ingredients:
-            raise NotFoundError(f"Ingredients for food with id {food_id} not found")
+            raise NotFoundError(
+                f"Ingredients for food with id {food_id} not found")
 
         return ingredients
