@@ -489,3 +489,27 @@ def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[FoodIngredie
 @router.get("/foods/{food_id}/nutrition")
 def get_food_nutrition(food_id: int):
     return FoodController().get_nutritional_values(food_id)
+
+@router.get(
+    "/foods/ingredients/all",
+    summary="Get all ingredients",
+    status_code=status.HTTP_200_OK,
+    response_model=CustomResponse[list[Ingredient]],
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Ingredient]],
+            "description": "List of all ingredients"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+    }
+)
+def get_all_ingredients() -> CustomResponse[list[Ingredient]]:
+    ingredients = FoodController().get_all_ingredients()
+    return CustomResponse(data=ingredients)

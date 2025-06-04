@@ -308,3 +308,6 @@ class FoodService(IFoodService):
     
     def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
         return self.repository.get_ingredients_by_food_id(food_id)
+
+    def get_all_ingredients(self) -> list[Ingredient]:
+        return self.repository.get_all_ingredients()

@@ -112,16 +112,16 @@ class IngredientDTO(BaseModel):
     trans_fats: float = Field(..., ge=0, description="Trans fats in grams per 100g or per unit")
     cholesterol: float = Field(..., ge=0, description="Cholesterol in mg per 100g or per unit")
 
-class Ingredient(IngredientDTO):
+class Ingredient(BaseModel):
     id: int = Field(
         ...,
         title="Ingredient ID",
-        description="Unique identifier for the food item",
+        description="Unique identifier for the ingredient item",
     )
-    created_at: datetime = Field(
-        ...,
-        title="Creation date",
-        description="Date when the ingredient item was created",
+    name: str = Field(
+         ...,
+        title="Ingredient name",
+        description="Unique name for the ingredient",       
     )
 
 class FoodIngredientDTO(BaseModel):

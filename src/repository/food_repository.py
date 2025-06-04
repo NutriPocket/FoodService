@@ -604,3 +604,18 @@ class FoodRepository(IFoodRepository):
             )
             for row in rows
         ]
+
+    def get_all_ingredients(self) -> list[Ingredient]:
+        query = text("""
+            SELECT id, name
+            FROM ingredients
+        """)
+        with engine.connect() as conn:
+            result = conn.execute(query)
+            ingredients = []
+            for row in result.fetchall():
+                ingredients.append(Ingredient(
+                    id=row.id,
+                    name=row.name
+                ))
+        return ingredients

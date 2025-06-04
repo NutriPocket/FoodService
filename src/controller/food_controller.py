@@ -94,3 +94,6 @@ class FoodController:
     
     def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
         return self.service.get_ingredients_by_food_id(food_id)
+    
+    def get_all_ingredients(self) -> list[Ingredient]:
+        return self.service.get_all_ingredients()
