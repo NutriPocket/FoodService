@@ -2,9 +2,11 @@ from fastapi import APIRouter, Query, status
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
-from models.foodPlans import Food, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
+from models.foodPlans import Food, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, IngredientQuantityDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan
 from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody
 from models.response import CustomResponse, ErrorDTO
+from sqlalchemy import Engine, Row, text
+from database.database import engine
 
 router = APIRouter()
 
@@ -513,3 +515,44 @@ def get_food_nutrition(food_id: int):
 def get_all_ingredients() -> CustomResponse[list[Ingredient]]:
     ingredients = FoodController().get_all_ingredients()
     return CustomResponse(data=ingredients)
+
+@router.post("/foods/{food_id}/ingredients/add/{ingredient_id}")
+def add_ingredient_to_food(food_id: int, ingredient_id: int, data: IngredientQuantityDTO):
+    insert_query = text("""
+        INSERT INTO food_ingredients (food_id, ingredient_id, quantity)
+        VALUES (:food_id, :ingredient_id, :quantity)
+        ON CONFLICT (food_id, ingredient_id) DO UPDATE
+        SET quantity = EXCLUDED.quantity
+    """)
+    with engine.connect() as conn:
+        try:
+            conn.execute(insert_query, {
+                "food_id": food_id,
+                "ingredient_id": ingredient_id,
+                "quantity": data.quantity
+            })
+            conn.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    return {"message": "Ingrediente agregado a la comida exitosamente."}
+
+@router.delete("/foods/{food_id}/ingredients/remove/{ingredient_id}")
+def remove_ingredient_from_food(food_id: int, ingredient_id: int):
+    delete_query = text("""
+        DELETE FROM food_ingredients
+        WHERE food_id = :food_id AND ingredient_id = :ingredient_id
+    """)
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(delete_query, {
+                "food_id": food_id,
+                "ingredient_id": ingredient_id
+            })
+            conn.commit()
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Ingrediente no encontrado en la comida.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": "Ingrediente eliminado de la comida exitosamente."}

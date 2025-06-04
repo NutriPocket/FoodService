@@ -128,6 +128,9 @@ class FoodIngredientDTO(BaseModel):
     ingredient: IngredientDTO
     quantity: float = Field(..., gt=0, description="Cantidad usada del ingrediente en gramos o unidades, segun sea el caso")
 
+class IngredientQuantityDTO(BaseModel):
+    quantity: float  # en gramos o unidades
+    measure: MeasureType
 
 class FoodDTO(BaseModel):
     name: str = Field(
