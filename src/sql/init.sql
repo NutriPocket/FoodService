@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS extra_foods (
 
 CREATE TABLE IF NOT EXISTS extrafoodplanlink (
     id_extra_food INTEGER NOT NULL,
-    id_user INTEGER NOT NULL,
+    id_user VARCHAR(36) NOT NULL,
     PRIMARY KEY (id_extra_food, id_user),
     FOREIGN KEY (id_extra_food) REFERENCES extra_foods(id_extra_food) ON DELETE CASCADE,
     FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
