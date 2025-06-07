@@ -94,7 +94,7 @@ class IFoodRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         pass
     
     @abstractmethod
@@ -505,19 +505,19 @@ class FoodRepository(IFoodRepository):
 
         return None
 
-    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         query = text("""
             INSERT INTO extra_foods(name, description, ingredients, image_url, day, moment)
             VALUES (:name, :description, :ingredients, :image_url, :day, :moment)
             RETURNING id_extra_food, name, description, ingredients, image_url, day, moment, created_at """)
 
         params = {
-            "name": food.name,
-            "description": food.description,
-            "ingredients": food.ingredients,
-            "image_url": food.image_url,
-            "day": food.day,
-            "moment": food.moment
+            "name": extraFood.name,
+            "description": extraFood.description,
+            "ingredients": extraFood.ingredients,
+            "image_url": extraFood.image_url,
+            "day": extraFood.day,
+            "moment": extraFood.moment
         }
 
         with self.engine.begin() as connection:
@@ -528,10 +528,11 @@ class FoodRepository(IFoodRepository):
 
             return ExtraFood(**result._mapping)
     
-    def link_extra_food_with_user(self, extraFoodId: int, userid: int) -> None:
+    def link_extra_food_with_user(self, extraFoodId: int, userid: str) -> None:
         query = text("""
-            INSERT INTO extrafoodplanlink (id_extra_food, id_user)
+            INSERT INTO extrafood_user_link(id_extra_food, id_user)
             VALUES (:id_extra_food, :id_user)
+            RETURNING id_extra_food, id_user
         """)
 
         params = {

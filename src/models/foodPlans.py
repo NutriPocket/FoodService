@@ -290,7 +290,7 @@ class ExtraFoodDTO(BaseModel):
     )
 
 class ExtraFood(ExtraFoodDTO):
-    id: int = Field(
+    id_extra_food: int = Field(
         ...,
         title="Extra Food ID",
         description="Unique identifier for the extra food item",

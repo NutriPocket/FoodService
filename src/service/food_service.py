@@ -268,11 +268,9 @@ class FoodService(IFoodService):
     def save_food_in_db(self, food: FoodDTO) -> Food:
         return self.repository.save_food(food)
 
-    def save_extra_food(self, food: ExtraFoodDTO, userId: str) -> ExtraFood:
-        extra_food: ExtraFood = self.repository.save_extra_food(food, userId)
-        link = self.link_extra_food_with_user(extra_food.id, userId)
-        if not link:
-            raise NotFoundError("user id invalid")
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
+        extra_food: ExtraFood = self.repository.save_extra_food(extraFood, userId)
+        self.repository.link_extra_food_with_user(extra_food.id_extra_food, userId)
         return extra_food
 
     def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:

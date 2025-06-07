@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS extra_foods (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS extrafoodplanlink (
+CREATE TABLE IF NOT EXISTS extrafood_user_link (
     id_extra_food INTEGER NOT NULL,
     id_user VARCHAR(36) NOT NULL,
     PRIMARY KEY (id_extra_food, id_user),
