@@ -3,7 +3,7 @@ from typing import Optional
 
 from models.errors.errors import NotFoundError
 from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFoodDTO, ExtraFood
-from models.params import GetAllFoodsParams
+from models.params import GetAllFoodsParams, GetExtraFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
 
@@ -74,6 +74,10 @@ class IFoodService(metaclass=ABCMeta):
 
     @abstractmethod
     def save_extra_food(self, food: ExtraFoodDTO) -> ExtraFood:
+        pass
+
+    @abstractmethod
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         pass
 
 
@@ -313,3 +317,6 @@ class FoodService(IFoodService):
                 f"Ingredients for food with id {food_id} not found")
 
         return ingredients
+    
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        return self.repository.get_extra_foods(params)

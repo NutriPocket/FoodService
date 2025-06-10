@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 from models.foodPlans import FoodPreferenceRequest, PlanDTO, FoodDTO, ExtraFoodDTO
 
@@ -37,3 +38,13 @@ class PostExtraFoodBody(BaseModel):
         title="Extra Food",
         description="Extra Food object to be created",
     )
+
+class GetExtraFoodsParams:
+    user_id: str
+    start_date: datetime
+    end_date: datetime
+    moment: Optional[str] = None
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)

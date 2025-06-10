@@ -4,7 +4,7 @@ from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
 from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
-from models.params import GetAllFoodsParams
+from models.params import GetAllFoodsParams, GetExtraFoodsParams
 from sqlalchemy.exc import IntegrityError
 
 
@@ -99,6 +99,10 @@ class IFoodRepository(metaclass=ABCMeta):
     
     @abstractmethod
     def link_extra_food_with_user(self, extraFoodId: int, userid: int) -> None:
+        pass
+
+    @abstractmethod
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         pass
 
 class FoodRepository(IFoodRepository):
@@ -544,3 +548,50 @@ class FoodRepository(IFoodRepository):
             result = connection.execute(query, params).fetchone()
             if not result:
                 raise Exception("Error linking the food with user")
+            
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        
+        _params: dict[str, Any] = dict()
+
+        query = text("""
+            SELECT 
+                extra_foods.id_extra_food, 
+                extra_foods.name, 
+                extra_foods.description, 
+                extra_foods.ingredients, 
+                extra_foods.image_url, 
+                extra_foods.day, 
+                extra_foods.moment, 
+                extra_foods.created_at 
+            FROM extra_foods 
+            LEFT JOIN  extrafood_user_link 
+            ON extrafood_user_link.id_extra_food = extra_foods.id_extra_food 
+            INNER JOIN users 
+            ON users.id_user=extrafood_user_link.id_user 
+            WHERE users.id_user = :user_id
+        """)
+
+        _params["user_id"] = params.user_id
+        if params.moment:
+            _params["moment"] = params.moment
+            query = text("""
+            SELECT 
+                extra_foods.id_extra_food, 
+                extra_foods.name, 
+                extra_foods.description, 
+                extra_foods.ingredients, 
+                extra_foods.image_url, 
+                extra_foods.day, 
+                extra_foods.moment, 
+                extra_foods.created_at 
+            FROM extra_foods 
+            LEFT JOIN  extrafood_user_link 
+            ON extrafood_user_link.id_extra_food = extra_foods.id_extra_food 
+            INNER JOIN users 
+            ON users.id_user=extrafood_user_link.id_user 
+            WHERE users.id_user = :user_id AND extra_foods.moment = :moment
+            """)
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, _params).fetchall()
+            return [ExtraFood(**row._mapping) for row in result]

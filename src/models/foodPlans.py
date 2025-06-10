@@ -258,13 +258,13 @@ class ExtraFoodDTO(BaseModel):
         max_length=64,
         min_length=1
     )
-    description: Optional[str] = Field(
+    description: str = Field(
         ...,
         title="extra food description",
         description="Description of the extra food item",
         max_length=512,
     )
-    ingredients: Optional[List[str]] = Field(
+    ingredients: List[str] = Field(
         ...,
         title="Ingredients",
         description="List of ingredients with recommended quantities and home measurements"
