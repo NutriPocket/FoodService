@@ -1,5 +1,5 @@
 from typing import Optional
-from models.params import GetAllFoodsParams
+from models.params import GetAllFoodsParams, PostFoodBody
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
 from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
@@ -78,9 +78,10 @@ class FoodController:
 
         return CustomResponse(data=_foods)
     
-    def add_food_in_db(self, food: FoodDTO) -> CustomResponse[Food]:
-        _foods = self.service.save_food_in_db(food)
-        return CustomResponse(data=_foods)
+    def add_food_in_db(self, body: PostFoodBody) -> CustomResponse[Food]:
+        food = self.service.save_food_in_db(data=body)
+
+        return CustomResponse(data=food)    
 
     def add_ingredient(self, ingredient: IngredientDTO) -> CustomResponse[Ingredient]:
         _ingredient = self.service.save_ingredient(ingredient)

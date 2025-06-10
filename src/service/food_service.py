@@ -3,7 +3,7 @@ from typing import Optional
 
 from models.errors.errors import NotFoundError
 from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
-from models.params import GetAllFoodsParams
+from models.params import GetAllFoodsParams, PostFoodBody
 from repository.food_repository import FoodRepository, IFoodRepository
 
 
@@ -65,7 +65,7 @@ class IFoodService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save_food_in_db(self, food: FoodDTO) -> Food:
+    def save_food_in_db(self, data: PostFoodBody) -> Food:
         pass
 
     @abstractmethod
@@ -260,8 +260,21 @@ class FoodService(IFoodService):
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         return self.repository.get_all_foods(params)
     
-    def save_food_in_db(self, food: FoodDTO) -> Food:
-        return self.repository.save_food(food)
+    def save_food_in_db(self, data: PostFoodBody) -> Food:
+        saved_food = self.repository.save_food(food=data.food)
+        
+        if data.food.ingredients:
+            self.repository.save_food_ingredients(saved_food.id, data.food.ingredients)
+
+        self.repository.link_food_to_plan(
+            food_id=saved_food.id,
+            plan_id=data.plan_id,
+            day_id=data.day_id,
+            meal_moment_id=data.meal_moment_id
+        )
+        
+        return saved_food
+
 
     def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:
         food_id_placeholders = [str(int(fid)) for fid in preferences]
@@ -311,3 +324,4 @@ class FoodService(IFoodService):
 
     def get_all_ingredients(self) -> list[Ingredient]:
         return self.repository.get_all_ingredients()
+    
