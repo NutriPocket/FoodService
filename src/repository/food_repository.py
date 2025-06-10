@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, List
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
@@ -92,6 +92,14 @@ class IFoodRepository(metaclass=ABCMeta):
 
     @abstractmethod
     def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
+        pass
+
+    @abstractmethod
+    def save_food_ingredients(self, food_id: int, ingredients: List[FoodIngredientDTO]) -> None:
+        pass
+
+    @abstractmethod 
+    def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
         pass
 
 
@@ -236,16 +244,15 @@ class FoodRepository(IFoodRepository):
                 f.description, 
                 f.price, 
                 f.created_at
-            FROM foodplanlink fpl
-            JOIN foods f ON fpl.food_id = f.id
-            WHERE fpl.plan_id = :plan_id
+            FROM foodplanlink_general pf
+            JOIN foods f ON pf.food_id = f.id
+            WHERE pf.plan_id = :plan_id
         """)
 
         params = {"plan_id": plan_id}
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchall()
-
             return [Food(**row._mapping) for row in result]
 
     def remove_food_from_plan(self, plan_id: int, data: FoodTimeDTO) -> None:
@@ -434,33 +441,15 @@ class FoodRepository(IFoodRepository):
 
     def save_food(self, food: FoodDTO) -> Food:
         query = text("""
-            INSERT INTO foods (name, description, price, calories_per_100g, 
-            protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
-            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g, image_url)
-            VALUES (:name, :description, :price, :calories_per_100g, :protein_per_100g, 
-            :carbs_per_100g, :fiber_per_100g, :saturated_fats_per_100g, 
-            :monounsaturated_fats_per_100g, :polyunsaturated_fats_per_100g, 
-            :trans_fats_per_100g, :cholesterol_per_100g, :image_url)
-            RETURNING id, name, description, price, calories_per_100g, protein_per_100g, 
-            carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
-            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g, image_url, created_at
+            INSERT INTO foods (name, description, price, image_url)
+            VALUES (:name, :description, :price, :image_url)
+            RETURNING id, name, description, price, image_url, created_at
         """)
 
         params = {
             "name": food.name,
             "description": food.description,
             "price": food.price,
-            "calories_per_100g": food.calories_per_100g,
-            "protein_per_100g": food.protein_per_100g,
-            "carbs_per_100g": food.carbs_per_100g,
-            "fiber_per_100g": food.fiber_per_100g,
-            "saturated_fats_per_100g": food.saturated_fats_per_100g,
-            "monounsaturated_fats_per_100g": food.monounsaturated_fats_per_100g,
-            "polyunsaturated_fats_per_100g": food.polyunsaturated_fats_per_100g,
-            "trans_fats_per_100g": food.trans_fats_per_100g,
-            "cholesterol_per_100g": food.cholesterol_per_100g,
             "image_url": food.image_url
         }
 
@@ -471,7 +460,48 @@ class FoodRepository(IFoodRepository):
                 raise Exception("Error saving food")
 
             return Food(**result._mapping)
-    
+
+    def save_food_ingredients(self, food_id: int, ingredients: List[FoodIngredientDTO]) -> None:
+        query = text("""
+            INSERT INTO food_ingredients (food_id, ingredient_id, quantity)
+            VALUES (:food_id, :ingredient_id, :quantity)
+        """)
+
+        with self.engine.begin() as connection:
+            for item in ingredients:
+                connection.execute(query, {
+                    "food_id": food_id,
+                    "ingredient_id": item.ingredient_id,
+                    "quantity": item.quantity
+                })
+
+    def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
+        if day_id is None and meal_moment_id is None:
+            query = text("""
+                INSERT INTO foodplanlink_general (food_id, plan_id, updated_at)
+                VALUES (:food_id, :plan_id, NOW())
+                ON CONFLICT (food_id, plan_id) DO NOTHING
+            """)
+            params = {
+                "food_id": food_id,
+                "plan_id": plan_id
+            }
+        else:
+            query = text("""
+                INSERT INTO foodplanlink (food_id, plan_id, day_id, meal_moment_id, updated_at)
+                VALUES (:food_id, :plan_id, :day_id, :meal_moment_id, NOW())
+                ON CONFLICT DO NOTHING
+            """)
+            params = {
+                "food_id": food_id,
+                "plan_id": plan_id,
+                "day_id": day_id,
+                "meal_moment_id": meal_moment_id
+            }
+
+        with self.engine.begin() as connection:
+            connection.execute(query, params)
+
     def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         query = text("""
             INSERT INTO ingredients (

@@ -132,6 +132,11 @@ class IngredientQuantityDTO(BaseModel):
     quantity: float  # en gramos o unidades
     measure: MeasureType
 
+
+class FoodIngredientLinkDTO(BaseModel):
+    ingredient_id: int = Field(..., description="ID of the ingredient")
+    quantity: float = Field(..., ge=0, description="Quantity of the ingredient in grams or units")
+
 class FoodDTO(BaseModel):
     name: str = Field(
         ...,
@@ -157,10 +162,10 @@ class FoodDTO(BaseModel):
         title="url",
         description="link to the image"
     )
-    ingredients: Optional[List[FoodIngredientDTO]] = Field(
+    ingredients: Optional[List[FoodIngredientLinkDTO]] = Field(
         None,
         title="Ingredients",
-        description="List of ingredients used in this food item with their quantities"
+        description="List of ingredient's ids used in this food item with their quantities"
     )
 
 class Food(FoodDTO):
@@ -222,5 +227,4 @@ class FoodLinkDTO(FoodTimeDTO):
         title="Food ID",
         description="Unique identifier for the food item",
     )
-
 

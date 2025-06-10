@@ -423,8 +423,8 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
         raise ValidationError(
             detail="If you want to create a food from scratch, you need to provide a long list of params...",
             title="Missing body or wrong body"
-    )
-    return FoodController().add_food_in_db(body.food)
+        )
+    return FoodController().add_food_in_db(body)
 
 @router.post(
     "/food/ingredients",
