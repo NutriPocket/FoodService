@@ -260,6 +260,15 @@ BEGIN
             (1, day_id, 3, 2, NOW()),  -- Merienda
             (1, day_id, 4, 1, NOW());  -- Cena
     END LOOP;
+
+    -- Populate generalized food-plan linkage
+    INSERT INTO foodplanlink_general (plan_id, food_id)
+    VALUES
+        (1, 2),  -- Desayuno
+        (1, 1),  -- Almuerzo
+        (1, 2),  -- Merienda
+        (1, 1)   -- Cena
+    ON CONFLICT DO NOTHING;
 END$$;
 
 -- Assign meals to each day
@@ -281,4 +290,13 @@ BEGIN
             (2, day_id, 3, 10, NOW()),  -- Merienda
             (2, day_id, 4, 4, NOW());   -- Cena
     END LOOP;
+
+    -- Populate generalized food-plan linkage
+    INSERT INTO foodplanlink_general (plan_id, food_id)
+    VALUES
+        (2, 6),   -- Desayuno
+        (2, 3),   -- Almuerzo
+        (2, 10),  -- Merienda
+        (2, 4)    -- Cena
+    ON CONFLICT DO NOTHING;
 END$$;

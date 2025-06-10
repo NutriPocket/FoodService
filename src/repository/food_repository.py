@@ -244,16 +244,15 @@ class FoodRepository(IFoodRepository):
                 f.description, 
                 f.price, 
                 f.created_at
-            FROM foodplanlink fpl
-            JOIN foods f ON fpl.food_id = f.id
-            WHERE fpl.plan_id = :plan_id
+            FROM foodplanlink_general pf
+            JOIN foods f ON pf.food_id = f.id
+            WHERE pf.plan_id = :plan_id
         """)
 
         params = {"plan_id": plan_id}
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchall()
-
             return [Food(**row._mapping) for row in result]
 
     def remove_food_from_plan(self, plan_id: int, data: FoodTimeDTO) -> None:
