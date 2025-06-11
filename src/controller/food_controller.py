@@ -1,10 +1,9 @@
 from typing import Optional
-
-from models.params import GetAllFoodsParams, GetExtraFoodsParams
+from models.params import GetAllFoodsParams, PostFoodBody
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment, ExtraFoodDTO, ExtraFood
-
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment, ExtraFoodDTO, ExtraFood
+from fastapi import Path
 
 class FoodController:
     def __init__(self, service: Optional[IFoodService] = None):
@@ -79,14 +78,26 @@ class FoodController:
 
         return CustomResponse(data=_foods)
     
-    def add_food_in_db(self, food: FoodDTO) -> CustomResponse[Food]:
-        _foods = self.service.save_food_in_db(food)
-        return CustomResponse(data=_foods)
+    def add_food_in_db(self, body: PostFoodBody) -> CustomResponse[Food]:
+        food = self.service.save_food_in_db(data=body)
 
-    def get_ingredients_by_food_id(self, food_id: int) -> CustomResponse[list[str]]:
-        _ingredients = self.service.get_ingredients(food_id)
+        return CustomResponse(data=food)    
+
+    def add_ingredient(self, ingredient: IngredientDTO) -> CustomResponse[Ingredient]:
+        _ingredient = self.service.save_ingredient(ingredient)
+        return CustomResponse(data=_ingredient)
+
+    def get_nutritional_values(self, food_id: int = Path(..., description="ID de la comida")) -> CustomResponse[dict]:
+        nutrition = self.service.get_food_nutritional_values(food_id)
+        if nutrition is None:
+            raise HTTPException(status_code=404, detail="Food not found or has no nutritional data")
+        return CustomResponse(data=nutrition)
     
-        return CustomResponse(data=_ingredients)
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        return self.service.get_ingredients_by_food_id(food_id)
+
+    def get_all_ingredients(self) -> list[Ingredient]:
+        return self.service.get_all_ingredients()
     
     def add_extra_food(self, extraFood: ExtraFoodDTO, userId: str)  -> CustomResponse[ExtraFood]:
         _extraFoods = self.service.save_extra_food(extraFood, userId)
@@ -95,3 +106,4 @@ class FoodController:
     def get_extra_foods(self, params: GetExtraFoodsParams) -> CustomResponse[list[ExtraFood]]:
         _extraFoods = self.service.get_extra_foods(params)
         return CustomResponse(data=_extraFoods)
+

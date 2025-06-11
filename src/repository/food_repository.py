@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Optional, Sequence
+from typing import Any, Optional, Sequence, List
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
 from models.params import GetAllFoodsParams, GetExtraFoodsParams
 from sqlalchemy.exc import IntegrityError
+from models.foodPlans import MeasureType
 
 
 class IFoodRepository(metaclass=ABCMeta):
@@ -90,7 +91,15 @@ class IFoodRepository(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
+        pass
+
+    @abstractmethod
+    def save_food_ingredients(self, food_id: int, ingredients: List[FoodIngredientDTO]) -> None:
+        pass
+
+    @abstractmethod 
+    def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
         pass
 
     @abstractmethod
@@ -246,16 +255,15 @@ class FoodRepository(IFoodRepository):
                 f.description, 
                 f.price, 
                 f.created_at
-            FROM foodplanlink fpl
-            JOIN foods f ON fpl.food_id = f.id
-            WHERE fpl.plan_id = :plan_id
+            FROM foodplanlink_general pf
+            JOIN foods f ON pf.food_id = f.id
+            WHERE pf.plan_id = :plan_id
         """)
 
         params = {"plan_id": plan_id}
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchall()
-
             return [Food(**row._mapping) for row in result]
 
     def remove_food_from_plan(self, plan_id: int, data: FoodTimeDTO) -> None:
@@ -407,15 +415,6 @@ class FoodRepository(IFoodRepository):
                 description, 
                 price, 
                 created_at,
-                calories_per_100g,
-                protein_per_100g,
-                carbs_per_100g,
-                fiber_per_100g,
-                saturated_fats_per_100g,
-                monounsaturated_fats_per_100g,
-                polyunsaturated_fats_per_100g,
-                trans_fats_per_100g,
-                cholesterol_per_100g,
                 image_url
             FROM foods
             WHERE id = :food_id
@@ -453,33 +452,15 @@ class FoodRepository(IFoodRepository):
 
     def save_food(self, food: FoodDTO) -> Food:
         query = text("""
-            INSERT INTO foods (name, description, price, calories_per_100g, 
-            protein_per_100g, carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
-            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g, image_url)
-            VALUES (:name, :description, :price, :calories_per_100g, :protein_per_100g, 
-            :carbs_per_100g, :fiber_per_100g, :saturated_fats_per_100g, 
-            :monounsaturated_fats_per_100g, :polyunsaturated_fats_per_100g, 
-            :trans_fats_per_100g, :cholesterol_per_100g, :image_url)
-            RETURNING id, name, description, price, calories_per_100g, protein_per_100g, 
-            carbs_per_100g, fiber_per_100g, saturated_fats_per_100g, 
-            monounsaturated_fats_per_100g, polyunsaturated_fats_per_100g, 
-            trans_fats_per_100g, cholesterol_per_100g, image_url, created_at
+            INSERT INTO foods (name, description, price, image_url)
+            VALUES (:name, :description, :price, :image_url)
+            RETURNING id, name, description, price, image_url, created_at
         """)
 
         params = {
             "name": food.name,
             "description": food.description,
             "price": food.price,
-            "calories_per_100g": food.calories_per_100g,
-            "protein_per_100g": food.protein_per_100g,
-            "carbs_per_100g": food.carbs_per_100g,
-            "fiber_per_100g": food.fiber_per_100g,
-            "saturated_fats_per_100g": food.saturated_fats_per_100g,
-            "monounsaturated_fats_per_100g": food.monounsaturated_fats_per_100g,
-            "polyunsaturated_fats_per_100g": food.polyunsaturated_fats_per_100g,
-            "trans_fats_per_100g": food.trans_fats_per_100g,
-            "cholesterol_per_100g": food.cholesterol_per_100g,
             "image_url": food.image_url
         }
 
@@ -490,24 +471,195 @@ class FoodRepository(IFoodRepository):
                 raise Exception("Error saving food")
 
             return Food(**result._mapping)
-    
-    def get_ingredients_by_food_id(self, food_id: int) -> Optional[list[str]]:
+
+    def save_food_ingredients(self, food_id: int, ingredients: List[FoodIngredientDTO]) -> None:
         query = text("""
-            SELECT ingredients
-            FROM foods
-            WHERE id = :food_id
-            LIMIT 1
+            INSERT INTO food_ingredients (food_id, ingredient_id, quantity)
+            VALUES (:food_id, :ingredient_id, :quantity)
         """)
 
-        params = {"food_id": food_id}
+        with self.engine.begin() as connection:
+            for item in ingredients:
+                connection.execute(query, {
+                    "food_id": food_id,
+                    "ingredient_id": item.ingredient_id,
+                    "quantity": item.quantity
+                })
+
+    def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
+        if day_id is None and meal_moment_id is None:
+            query = text("""
+                INSERT INTO foodplanlink_general (food_id, plan_id, updated_at)
+                VALUES (:food_id, :plan_id, NOW())
+                ON CONFLICT (food_id, plan_id) DO NOTHING
+            """)
+            params = {
+                "food_id": food_id,
+                "plan_id": plan_id
+            }
+        else:
+            query = text("""
+                INSERT INTO foodplanlink (food_id, plan_id, day_id, meal_moment_id, updated_at)
+                VALUES (:food_id, :plan_id, :day_id, :meal_moment_id, NOW())
+                ON CONFLICT DO NOTHING
+            """)
+            params = {
+                "food_id": food_id,
+                "plan_id": plan_id,
+                "day_id": day_id,
+                "meal_moment_id": meal_moment_id
+            }
+
+        with self.engine.begin() as connection:
+            connection.execute(query, params)
+
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
+        query = text("""
+            INSERT INTO ingredients (
+                name,
+                measure_type,
+                calories,
+                protein,
+                carbs,
+                fiber,
+                saturated_fats,
+                monounsaturated_fats,
+                polyunsaturated_fats,
+                trans_fats,
+                cholesterol
+            )
+            VALUES (
+                :name,
+                :measure_type,
+                :calories,
+                :protein,
+                :carbs,
+                :fiber,
+                :saturated_fats,
+                :monounsaturated_fats,
+                :polyunsaturated_fats,
+                :trans_fats,
+                :cholesterol
+            )
+            RETURNING
+                id,
+                name,
+                measure_type,
+                calories,
+                protein,
+                carbs,
+                fiber,
+                saturated_fats,
+                monounsaturated_fats,
+                polyunsaturated_fats,
+                trans_fats,
+                cholesterol,
+                created_at
+        """)
+
+        params = {
+            "name": ingredient.name,
+            "measure_type": ingredient.measure_type.value,  # assuming MeasureType is Enum
+            "calories": ingredient.calories,
+            "protein": ingredient.protein,
+            "carbs": ingredient.carbs,
+            "fiber": ingredient.fiber,
+            "saturated_fats": ingredient.saturated_fats,
+            "monounsaturated_fats": ingredient.monounsaturated_fats,
+            "polyunsaturated_fats": ingredient.polyunsaturated_fats,
+            "trans_fats": ingredient.trans_fats,
+            "cholesterol": ingredient.cholesterol,
+        }
 
         with self.engine.begin() as connection:
             result = connection.execute(query, params).fetchone()
 
-            if result:
-                return result[0]
+            if not result:
+                raise Exception("Error saving ingredient")
 
-        return None
+            return Ingredient(**result._mapping)
+            
+    def get_nutritional_values(self, food_id: int) -> Optional[dict]:
+        query = text("""
+            SELECT 
+                SUM(i.calories * fi.quantity / 100.0) AS calories,
+                SUM(i.protein * fi.quantity / 100.0) AS protein,
+                SUM(i.carbs * fi.quantity / 100.0) AS carbs,
+                SUM(i.fiber * fi.quantity / 100.0) AS fiber,
+                SUM(i.saturated_fats * fi.quantity / 100.0) AS saturated_fats,
+                SUM(i.monounsaturated_fats * fi.quantity / 100.0) AS monounsaturated_fats,
+                SUM(i.polyunsaturated_fats * fi.quantity / 100.0) AS polyunsaturated_fats,
+                SUM(i.trans_fats * fi.quantity / 100.0) AS trans_fats,
+                SUM(i.cholesterol * fi.quantity / 100.0) AS cholesterol
+            FROM food_ingredients fi
+            JOIN ingredients i ON fi.ingredient_id = i.id
+            WHERE fi.food_id = :food_id
+            GROUP BY fi.food_id
+        """)
+        with self.engine.connect() as conn:
+            result = conn.execute(query, {"food_id": food_id}).fetchone()
+            if result is None:
+                return None
+            return dict(result._mapping)
+
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        query = text("""
+            SELECT 
+                i.name,
+                i.measure_type,
+                i.calories,
+                i.protein,
+                i.carbs,
+                i.fiber,
+                i.saturated_fats,
+                i.monounsaturated_fats,
+                i.polyunsaturated_fats,
+                i.trans_fats,
+                i.cholesterol,
+                fi.quantity
+            FROM food_ingredients fi
+            JOIN ingredients i ON fi.ingredient_id = i.id
+            WHERE fi.food_id = :food_id
+        """)
+
+        with engine.connect() as conn:
+            result = conn.execute(query, {"food_id": food_id})
+            rows = result.fetchall()
+
+        return [
+            FoodIngredientDTO(
+                ingredient=IngredientDTO(
+                    name=row[0],
+                    measure_type=MeasureType(row[1]),
+                    calories=row[2],
+                    protein=row[3],
+                    carbs=row[4],
+                    fiber=row[5],
+                    saturated_fats=row[6],
+                    monounsaturated_fats=row[7],
+                    polyunsaturated_fats=row[8],
+                    trans_fats=row[9],
+                    cholesterol=row[10]
+                ),
+                quantity=row[11]
+            )
+            for row in rows
+        ]
+
+    def get_all_ingredients(self) -> list[Ingredient]:
+        query = text("""
+            SELECT id, name
+            FROM ingredients
+        """)
+        with engine.connect() as conn:
+            result = conn.execute(query)
+            ingredients = []
+            for row in result.fetchall():
+                ingredients.append(Ingredient(
+                    id=row.id,
+                    name=row.name
+                ))
+        return ingredients
 
     def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         query = text("""

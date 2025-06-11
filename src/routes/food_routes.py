@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Path
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
-from models.foodPlans import Food, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
+from models.foodPlans import Food, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, IngredientQuantityDTO, Plan, PlanAssignment, PlanAssignmentDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
 from models.params import GetAllFoodsParams, PostPlanBody, PostFoodBody, PostExtraFoodBody, GetExtraFoodsParams
 from models.response import CustomResponse, ErrorDTO
+from sqlalchemy import Engine, Row, text
+from database.database import engine
 from datetime import datetime
 
 router = APIRouter()
@@ -422,8 +424,34 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
         raise ValidationError(
             detail="If you want to create a food from scratch, you need to provide a long list of params...",
             title="Missing body or wrong body"
-    )
-    return FoodController().add_food_in_db(body.food)
+        )
+    return FoodController().add_food_in_db(body)
+
+@router.post(
+    "/food/ingredients",
+    summary="Create a new ingredient",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": CustomResponse[Ingredient],
+            "description": "New ingredient created"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid json body format"
+        },
+    }
+)
+def post_ingredient(body: IngredientDTO) -> CustomResponse[Ingredient]:
+    return FoodController().add_ingredient(body)
 
 @router.get(
     "/foods/{food_id}/ingredients",
@@ -452,8 +480,29 @@ def post_food(body: PostFoodBody) -> CustomResponse[Food]:
         },
     }
 )
-def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[str]]:
-    return FoodController().get_ingredients_by_food_id(food_id)
+
+def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[FoodIngredientDTO]]:
+    ingredients = FoodController().get_ingredients_by_food_id(food_id)
+    if not ingredients:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No ingredients found for food with ID {food_id}"
+        )
+    return CustomResponse(data=ingredients)
+
+@router.get("/foods/{food_id}/nutrition")
+def get_food_nutrition(food_id: int):
+    return FoodController().get_nutritional_values(food_id)
+
+@router.get(
+    "/foods/ingredients/all",
+    summary="Get all ingredients",
+    status_code=status.HTTP_200_OK,
+    response_model=CustomResponse[list[Ingredient]],
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[Ingredient]],
+            "description": "List of all ingredients"
 
 @router.post(
     "/users/{user_id}/extrafood",
@@ -502,12 +551,81 @@ def post_extra_food(body: PostExtraFoodBody, user_id: str) -> CustomResponse[Ext
             "model": ErrorDTO,
             "description": "No authorization provided"
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
-            "model": ErrorDTO,
-            "description": "Invalid json body format"
-        },
     }
 )
+          
+def get_all_ingredients() -> CustomResponse[list[Ingredient]]:
+    ingredients = FoodController().get_all_ingredients()
+    return CustomResponse(data=ingredients)
+
+@router.post("/foods/{food_id}/ingredients/add/{ingredient_id}")
+def add_ingredient_to_food(food_id: int, ingredient_id: int, data: IngredientQuantityDTO):
+    insert_query = text("""
+        INSERT INTO food_ingredients (food_id, ingredient_id, quantity)
+        VALUES (:food_id, :ingredient_id, :quantity)
+        ON CONFLICT (food_id, ingredient_id) DO UPDATE
+        SET quantity = EXCLUDED.quantity
+    """)
+    with engine.connect() as conn:
+        try:
+            conn.execute(insert_query, {
+                "food_id": food_id,
+                "ingredient_id": ingredient_id,
+                "quantity": data.quantity
+            })
+            conn.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    return {"message": "Ingrediente agregado a la comida exitosamente."}
+
+@router.delete("/foods/{food_id}/ingredients/remove/{ingredient_id}")
+def remove_ingredient_from_food(food_id: int, ingredient_id: int):
+    delete_query = text("""
+        DELETE FROM food_ingredients
+        WHERE food_id = :food_id AND ingredient_id = :ingredient_id
+    """)
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(delete_query, {
+                "food_id": food_id,
+                "ingredient_id": ingredient_id
+            })
+            conn.commit()
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Ingrediente no encontrado en la comida.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return {"message": "Ingrediente eliminado de la comida exitosamente."}
+
+@router.get("/foods/ingredients/{ingredient_search}")
+def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, description="Partial name of the ingredient")):
+    search_query = text("""
+        SELECT id, name, measure_type
+        FROM ingredients
+        WHERE name ILIKE :search_term
+    """)
+    
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(search_query, {
+                "search_term": f"%{ingredient_search}%"
+            })
+            ingredients = [
+                {
+                    "id": row.id,
+                    "name": row.name,
+                    "measure_type": row.measure_type
+                }
+                for row in result.fetchall()
+            ]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return ingredients
+
 def get_extra_foods(user_id: str, start_date: datetime, end_date: datetime, moment: str = Query(None, description="Search food by moment. Case insensitive. Anywhere match")) -> CustomResponse[list[ExtraFood]]:
     params = GetExtraFoodsParams(user_id=user_id, start_date=start_date, end_date=end_date, moment=moment)
     return FoodController().get_extra_foods(params)
+

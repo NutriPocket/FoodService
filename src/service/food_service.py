@@ -2,8 +2,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodTimeDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFoodDTO, ExtraFood
-from models.params import GetAllFoodsParams, GetExtraFoodsParams
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFoodDTO, ExtraFood
+from models.params import GetAllFoodsParams, PostFoodBody, GetExtraFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
 
@@ -65,11 +65,11 @@ class IFoodService(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def save_food_in_db(self, food: FoodDTO) -> Food:
+    def save_food_in_db(self, data: PostFoodBody) -> Food:
         pass
 
     @abstractmethod
-    def get_ingredients(self, food_id: int) -> Optional[list[str]]:
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         pass
 
     @abstractmethod
@@ -268,9 +268,21 @@ class FoodService(IFoodService):
 
     def get_all_foods(self, params: GetAllFoodsParams) -> list[Food]:
         return self.repository.get_all_foods(params)
+    
+    def save_food_in_db(self, data: PostFoodBody) -> Food:
+        saved_food = self.repository.save_food(food=data.food)
+        
+        if data.food.ingredients:
+            self.repository.save_food_ingredients(saved_food.id, data.food.ingredients)
 
-    def save_food_in_db(self, food: FoodDTO) -> Food:
-        return self.repository.save_food(food)
+        self.repository.link_food_to_plan(
+            food_id=saved_food.id,
+            plan_id=data.plan_id,
+            day_id=data.day_id,
+            meal_moment_id=data.meal_moment_id
+        )
+        
+        return saved_food
 
     def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         extra_food: ExtraFood = self.repository.save_extra_food(extraFood, userId)
@@ -309,9 +321,23 @@ class FoodService(IFoodService):
 
         return _ret
 
-    def get_ingredients(self, food_id: int) -> list[str]:
-        ingredients = self.repository.get_ingredients_by_food_id(food_id)
+    def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
+        saved_ingredient = self.repository.save_ingredient(ingredient)
 
+        if not saved_ingredient:
+            raise Exception("Failed to save ingredient")
+
+        return saved_ingredient
+
+    def get_food_nutritional_values(self, food_id: int) -> Optional[dict]:
+        return self.repository.get_nutritional_values(food_id)
+    
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        return self.repository.get_ingredients_by_food_id(food_id)
+
+    def get_all_ingredients(self) -> list[Ingredient]:
+        return self.repository.get_all_ingredients()
+    
         if not ingredients:
             raise NotFoundError(
                 f"Ingredients for food with id {food_id} not found")
@@ -320,3 +346,4 @@ class FoodService(IFoodService):
     
     def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         return self.repository.get_extra_foods(params)
+
