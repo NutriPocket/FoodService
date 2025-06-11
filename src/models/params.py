@@ -33,7 +33,7 @@ class PostFoodBody(BaseModel):
     )
 
 class PostExtraFoodBody(BaseModel):
-    food: Optional[ExtraFoodDTO] = Field(
+    extraFood: Optional[ExtraFoodDTO] = Field(
         None,
         title="Extra Food",
         description="Extra Food object to be created",

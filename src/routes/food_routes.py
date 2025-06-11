@@ -479,11 +479,11 @@ def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[str]]:
     }
 )
 def post_extra_food(body: PostExtraFoodBody, user_id: str) -> CustomResponse[ExtraFood]:
-    if not (body.food and user_id):
+    if not (body.extraFood and user_id):
         raise ValidationError(
             detail="If you want to create a extra food from scratch, you need to provide a user id and a long list of params...",
             title="Missing body or wrong body")
-    return FoodController().add_extra_food(body.food, user_id) 
+    return FoodController().add_extra_food(body.extraFood, user_id) 
 
 @router.get(
     "/extrafoods/{user_id}/",

@@ -142,6 +142,7 @@ CREATE TABLE IF NOT EXISTS extra_foods (
     image_url VARCHAR(255),
     day VARCHAR(255) NOT NULL,
     moment VARCHAR(255) NOT NULL,
+    date TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

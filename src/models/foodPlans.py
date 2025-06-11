@@ -288,6 +288,11 @@ class ExtraFoodDTO(BaseModel):
         max_length=64,
         min_length=1
     )
+    date: datetime = Field(
+        ...,
+        title="a date ",
+        description="Date",
+    )
 
 class ExtraFood(ExtraFoodDTO):
     id_extra_food: int = Field(

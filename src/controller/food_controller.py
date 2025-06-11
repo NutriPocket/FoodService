@@ -88,8 +88,8 @@ class FoodController:
     
         return CustomResponse(data=_ingredients)
     
-    def add_extra_food(self, food: ExtraFoodDTO, userId: str)  -> CustomResponse[ExtraFood]:
-        _extraFoods = self.service.save_extra_food(food, userId)
+    def add_extra_food(self, extraFood: ExtraFoodDTO, userId: str)  -> CustomResponse[ExtraFood]:
+        _extraFoods = self.service.save_extra_food(extraFood, userId)
         return CustomResponse(data=_extraFoods)
     
     def get_extra_foods(self, params: GetExtraFoodsParams) -> CustomResponse[list[ExtraFood]]:
