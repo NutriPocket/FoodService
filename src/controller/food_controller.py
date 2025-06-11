@@ -2,7 +2,7 @@ from typing import Optional
 from models.params import GetAllFoodsParams, PostFoodBody
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment, ExtraFoodDTO, ExtraFood
 from fastapi import Path
 
 class FoodController:
@@ -95,6 +95,15 @@ class FoodController:
     
     def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
         return self.service.get_ingredients_by_food_id(food_id)
-    
+
     def get_all_ingredients(self) -> list[Ingredient]:
         return self.service.get_all_ingredients()
+    
+    def add_extra_food(self, extraFood: ExtraFoodDTO, userId: str)  -> CustomResponse[ExtraFood]:
+        _extraFoods = self.service.save_extra_food(extraFood, userId)
+        return CustomResponse(data=_extraFoods)
+    
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> CustomResponse[list[ExtraFood]]:
+        _extraFoods = self.service.get_extra_foods(params)
+        return CustomResponse(data=_extraFoods)
+

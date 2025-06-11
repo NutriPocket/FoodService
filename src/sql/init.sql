@@ -219,6 +219,7 @@ CREATE TABLE IF NOT EXISTS foodplanlink (
     FOREIGN KEY (meal_moment_id) REFERENCES meal_moments(id) ON DELETE CASCADE
 );
 
+
 CREATE TABLE IF NOT EXISTS foodplanlink_general (
     food_id INTEGER NOT NULL,
     plan_id INTEGER NOT NULL,
@@ -226,6 +227,26 @@ CREATE TABLE IF NOT EXISTS foodplanlink_general (
     PRIMARY KEY (food_id, plan_id),
     FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES plans(id_plan) ON DELETE CASCADE
+
+-- Table 'Extra Foods'
+CREATE TABLE IF NOT EXISTS extra_foods (
+    id_extra_food SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    ingredients TEXT[] NOT NULL,
+    image_url VARCHAR(255),
+    day VARCHAR(255) NOT NULL,
+    moment VARCHAR(255) NOT NULL,
+    date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS extrafood_user_link (
+    id_extra_food INTEGER NOT NULL,
+    id_user VARCHAR(36) NOT NULL,
+    PRIMARY KEY (id_extra_food, id_user),
+    FOREIGN KEY (id_extra_food) REFERENCES extra_foods(id_extra_food) ON DELETE CASCADE,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
 );
 
 -- Link foods used in Plan 1 (Subir de Peso)

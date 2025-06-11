@@ -228,3 +228,58 @@ class FoodLinkDTO(FoodTimeDTO):
         description="Unique identifier for the food item",
     )
 
+class ExtraFoodDTO(BaseModel):
+    name: str = Field(
+        ...,
+        title="Extra food name",
+        description="Name of the extra food item",
+        max_length=64,
+        min_length=1
+    )
+    description: str = Field(
+        ...,
+        title="extra food description",
+        description="Description of the extra food item",
+        max_length=512,
+    )
+    ingredients: List[str] = Field(
+        ...,
+        title="Ingredients",
+        description="List of ingredients with recommended quantities and home measurements"
+    )
+    image_url: Optional[str] = Field(
+        None,
+        title="url",
+        description="link to the image"
+    )
+    day: str = Field(
+        ...,
+        title="day",
+        description="Lunes, Martes, ..",
+        max_length=64,
+        min_length=1
+    )
+    moment: str = Field(
+        ...,
+        title="moment",
+        description="Desayuno, almuerzo, cena",
+        max_length=64,
+        min_length=1
+    )
+    date: datetime = Field(
+        ...,
+        title="a date ",
+        description="Date",
+    )
+
+class ExtraFood(ExtraFoodDTO):
+    id_extra_food: int = Field(
+        ...,
+        title="Extra Food ID",
+        description="Unique identifier for the extra food item",
+    )
+    created_at: datetime = Field(
+        ...,
+        title="Creation date",
+        description="Date when the food item was created",
+    )

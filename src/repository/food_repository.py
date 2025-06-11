@@ -3,8 +3,8 @@ from typing import Any, Optional, Sequence, List
 from sqlalchemy import Engine, Row, text
 from database.database import engine
 from models.errors.errors import EntityAlreadyExistsError, NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
-from models.params import GetAllFoodsParams
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFood, ExtraFoodDTO
+from models.params import GetAllFoodsParams, GetExtraFoodsParams
 from sqlalchemy.exc import IntegrityError
 from models.foodPlans import MeasureType
 
@@ -102,6 +102,17 @@ class IFoodRepository(metaclass=ABCMeta):
     def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
         pass
 
+    @abstractmethod
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
+        pass
+    
+    @abstractmethod
+    def link_extra_food_with_user(self, extraFoodId: int, userid: int) -> None:
+        pass
+
+    @abstractmethod
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        pass
 
 class FoodRepository(IFoodRepository):
     def __init__(self, engine_: Optional[Engine] = None):
@@ -649,3 +660,107 @@ class FoodRepository(IFoodRepository):
                     name=row.name
                 ))
         return ingredients
+
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
+        query = text("""
+            INSERT INTO extra_foods(name, description, ingredients, image_url, day, moment, date)
+            VALUES (:name, :description, :ingredients, :image_url, :day, :moment, :date)
+            RETURNING id_extra_food, name, description, ingredients, image_url, day, moment, date, created_at """)
+
+        params = {
+            "name": extraFood.name,
+            "description": extraFood.description,
+            "ingredients": extraFood.ingredients,
+            "image_url": extraFood.image_url,
+            "day": extraFood.day,
+            "moment": extraFood.moment,
+            "date": extraFood.date
+        }
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+
+            if not result:
+                raise Exception("Error saving extra food")
+
+            return ExtraFood(**result._mapping)
+    
+    def link_extra_food_with_user(self, extraFoodId: int, userid: str) -> None:
+        query = text("""
+            INSERT INTO extrafood_user_link(id_extra_food, id_user)
+            VALUES (:id_extra_food, :id_user)
+            RETURNING id_extra_food, id_user
+        """)
+
+        params = {
+            "id_extra_food": extraFoodId,
+            "id_user": userid
+        }
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, params).fetchone()
+            if not result:
+                raise Exception("Error linking the food with user")
+            
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        
+        _params: dict[str, Any] = dict()
+
+        query = text("""
+            SELECT 
+                extra_foods.id_extra_food, 
+                extra_foods.name, 
+                extra_foods.description, 
+                extra_foods.ingredients, 
+                extra_foods.image_url, 
+                extra_foods.day, 
+                extra_foods.moment, 
+                extra_foods.date, 
+                extra_foods.created_at 
+            FROM extra_foods 
+            LEFT JOIN  extrafood_user_link 
+            ON extrafood_user_link.id_extra_food = extra_foods.id_extra_food 
+            INNER JOIN users 
+            ON users.id_user=extrafood_user_link.id_user 
+            WHERE 
+            (
+                (users.id_user = :user_id) 
+                AND 
+                (extra_foods.date > :start_date AND extra_foods.date < :end_date)
+            )
+        """)
+
+        _params["user_id"] = params.user_id
+        _params["start_date"] = params.start_date
+        _params["end_date"] = params.end_date
+        if params.moment:
+            _params["moment"] = params.moment
+            query = text("""
+            SELECT 
+                extra_foods.id_extra_food, 
+                extra_foods.name, 
+                extra_foods.description, 
+                extra_foods.ingredients, 
+                extra_foods.image_url, 
+                extra_foods.day, 
+                extra_foods.moment, 
+                extra_foods.date, 
+                extra_foods.created_at 
+            FROM extra_foods 
+            LEFT JOIN  extrafood_user_link 
+            ON extrafood_user_link.id_extra_food = extra_foods.id_extra_food 
+            INNER JOIN users 
+            ON users.id_user=extrafood_user_link.id_user 
+            WHERE 
+            (
+                (users.id_user = :user_id) 
+                AND 
+                (extra_foods.date >= :start_date AND extra_foods.date <= :end_date)
+                AND
+                (extra_foods.moment = :moment)
+            )
+        """)
+
+        with self.engine.begin() as connection:
+            result = connection.execute(query, _params).fetchall()
+            return [ExtraFood(**row._mapping) for row in result]

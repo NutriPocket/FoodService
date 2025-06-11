@@ -2,8 +2,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from models.errors.errors import NotFoundError
-from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan
-from models.params import GetAllFoodsParams, PostFoodBody
+from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO,Plan, PlanAssignment, PlanAssignmentDTO, PlanDTO, WeeklyPlan, ExtraFoodDTO, ExtraFood
+from models.params import GetAllFoodsParams, PostFoodBody, GetExtraFoodsParams
 from repository.food_repository import FoodRepository, IFoodRepository
 
 
@@ -71,6 +71,15 @@ class IFoodService(metaclass=ABCMeta):
     @abstractmethod
     def save_ingredient(self, ingredient: IngredientDTO) -> Ingredient:
         pass
+
+    @abstractmethod
+    def save_extra_food(self, food: ExtraFoodDTO) -> ExtraFood:
+        pass
+
+    @abstractmethod
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        pass
+
 
 class FoodService(IFoodService):
     def __init__(self, repository: Optional[IFoodRepository] = None):
@@ -275,6 +284,10 @@ class FoodService(IFoodService):
         
         return saved_food
 
+    def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
+        extra_food: ExtraFood = self.repository.save_extra_food(extraFood, userId)
+        self.repository.link_extra_food_with_user(extra_food.id_extra_food, userId)
+        return extra_food
 
     def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:
         food_id_placeholders = [str(int(fid)) for fid in preferences]
@@ -325,3 +338,12 @@ class FoodService(IFoodService):
     def get_all_ingredients(self) -> list[Ingredient]:
         return self.repository.get_all_ingredients()
     
+        if not ingredients:
+            raise NotFoundError(
+                f"Ingredients for food with id {food_id} not found")
+
+        return ingredients
+    
+    def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
+        return self.repository.get_extra_foods(params)
+
