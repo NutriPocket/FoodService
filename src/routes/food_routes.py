@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Path
 
 from controller.food_controller import FoodController
 from models.errors.errors import ValidationError
@@ -556,3 +556,22 @@ def remove_ingredient_from_food(food_id: int, ingredient_id: int):
             raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Ingrediente eliminado de la comida exitosamente."}
+
+@router.get("/foods/ingredients/{ingredient_search}")
+def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, description="Partial name of the ingredient")):
+    search_query = text("""
+        SELECT id, name
+        FROM ingredients
+        WHERE name ILIKE :search_term
+    """)
+    
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(search_query, {
+                "search_term": f"%{ingredient_search}%"
+            })
+            ingredients = [{"id": row.id, "name": row.name} for row in result.fetchall()]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return ingredients
