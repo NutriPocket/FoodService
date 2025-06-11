@@ -1,5 +1,5 @@
 from typing import Optional
-from models.params import GetAllFoodsParams, PostFoodBody
+from models.params import GetAllFoodsParams, PostFoodBody, GetExtraFoodsParams
 from models.response import CustomResponse
 from service.food_service import FoodService, IFoodService
 from models.foodPlans import Food, FoodDTO, FoodLinkDTO, FoodIngredientDTO, FoodTimeDTO, Ingredient, IngredientDTO, PlanAssignmentDTO, PlanDTO, WeeklyPlan, Plan, PlanAssignment, ExtraFoodDTO, ExtraFood

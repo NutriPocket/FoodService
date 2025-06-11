@@ -227,6 +227,7 @@ CREATE TABLE IF NOT EXISTS foodplanlink_general (
     PRIMARY KEY (food_id, plan_id),
     FOREIGN KEY (food_id) REFERENCES foods(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES plans(id_plan) ON DELETE CASCADE
+);
 
 -- Table 'Extra Foods'
 CREATE TABLE IF NOT EXISTS extra_foods (
