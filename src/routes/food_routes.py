@@ -560,7 +560,7 @@ def remove_ingredient_from_food(food_id: int, ingredient_id: int):
 @router.get("/foods/ingredients/{ingredient_search}")
 def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, description="Partial name of the ingredient")):
     search_query = text("""
-        SELECT id, name
+        SELECT id, name, measure_type
         FROM ingredients
         WHERE name ILIKE :search_term
     """)
@@ -570,7 +570,14 @@ def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, 
             result = conn.execute(search_query, {
                 "search_term": f"%{ingredient_search}%"
             })
-            ingredients = [{"id": row.id, "name": row.name} for row in result.fetchall()]
+            ingredients = [
+                {
+                    "id": row.id,
+                    "name": row.name,
+                    "measure_type": row.measure_type
+                }
+                for row in result.fetchall()
+            ]
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
