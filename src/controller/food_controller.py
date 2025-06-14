@@ -106,4 +106,6 @@ class FoodController:
     def get_extra_foods(self, params: GetExtraFoodsParams) -> CustomResponse[list[ExtraFood]]:
         _extraFoods = self.service.get_extra_foods(params)
         return CustomResponse(data=_extraFoods)
-
+    
+    def get_ingredients_by_extra_food_id(self, extra_food_id: int) -> list[FoodIngredientDTO]:
+        return self.service.get_ingredients_by_extra_food_id(extra_food_id)

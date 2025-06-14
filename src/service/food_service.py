@@ -80,6 +80,13 @@ class IFoodService(metaclass=ABCMeta):
     def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         pass
 
+    @abstractmethod
+    def get_ingredients_by_extra_food_id(self, extra_food_id: int) -> list[FoodIngredientDTO]:
+        pass
+
+    @abstractmethod
+    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
+        pass
 
 class FoodService(IFoodService):
     def __init__(self, repository: Optional[IFoodRepository] = None):
@@ -287,6 +294,10 @@ class FoodService(IFoodService):
     def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         extra_food: ExtraFood = self.repository.save_extra_food(extraFood, userId)
         self.repository.link_extra_food_with_user(extra_food.id_extra_food, userId)
+        
+        if extraFood.ingredients:
+            self.repository.save_extra_food_ingredients(extra_food.id_extra_food, extraFood.ingredients)
+
         return extra_food
 
     def create_food_plan_by_preferences(self, user_id: str, preferences: list, plan: PlanDTO) -> Plan:
@@ -333,17 +344,13 @@ class FoodService(IFoodService):
         return self.repository.get_nutritional_values(food_id)
     
     def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
-        return self.repository.get_ingredients_by_food_id(food_id)
+        return self.repository.get_ingredients_by_food_id(food_id = food_id, extraFoodId=None)
 
     def get_all_ingredients(self) -> list[Ingredient]:
         return self.repository.get_all_ingredients()
     
-        if not ingredients:
-            raise NotFoundError(
-                f"Ingredients for food with id {food_id} not found")
-
-        return ingredients
-    
     def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         return self.repository.get_extra_foods(params)
-
+    
+    def get_ingredients_by_extra_food_id(self, extra_food_id: int) -> list[FoodIngredientDTO]:
+        return self.repository.get_ingredients_by_food_id(food_id = None, extraFoodId=extra_food_id)

@@ -393,7 +393,6 @@ def get_food_by_id(food_id: int) -> CustomResponse[Food]:
 )
 def get_all_foods(search_name: str = Query(None, description="Search food by name. Case insensitive. Anywhere match")) -> CustomResponse[list[Food]]:
     params = GetAllFoodsParams(search_name=search_name)
-
     return FoodController().get_all_foods(params)
 
 @router.post(
@@ -480,7 +479,6 @@ def post_ingredient(body: IngredientDTO) -> CustomResponse[Ingredient]:
         },
     }
 )
-
 def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[FoodIngredientDTO]]:
     ingredients = FoodController().get_ingredients_by_food_id(food_id)
     if not ingredients:
@@ -550,7 +548,7 @@ def post_extra_food(body: PostExtraFoodBody, user_id: str) -> CustomResponse[Ext
 
 @router.get(
     "/extrafoods/{user_id}/",
-    summary="Get all extra foods",
+    summary="Get all extra foods from a user ID",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
@@ -567,10 +565,9 @@ def post_extra_food(body: PostExtraFoodBody, user_id: str) -> CustomResponse[Ext
         },
     }
 )
-          
-def get_all_ingredients() -> CustomResponse[list[Ingredient]]:
-    ingredients = FoodController().get_all_ingredients()
-    return CustomResponse(data=ingredients)
+def get_extra_foods(user_id: str, start_date: datetime, end_date: datetime, moment: str = Query(None, description="Search food by moment. Case insensitive. Anywhere match")) -> CustomResponse[list[ExtraFood]]:
+    params = GetExtraFoodsParams(user_id=user_id, start_date=start_date, end_date=end_date, moment=moment)
+    return FoodController().get_extra_foods(params)
 
 @router.post("/foods/{food_id}/ingredients/add/{ingredient_id}")
 def add_ingredient_to_food(food_id: int, ingredient_id: int, data: IngredientQuantityDTO):
@@ -639,7 +636,38 @@ def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, 
 
     return ingredients
 
-def get_extra_foods(user_id: str, start_date: datetime, end_date: datetime, moment: str = Query(None, description="Search food by moment. Case insensitive. Anywhere match")) -> CustomResponse[list[ExtraFood]]:
-    params = GetExtraFoodsParams(user_id=user_id, start_date=start_date, end_date=end_date, moment=moment)
-    return FoodController().get_extra_foods(params)
-
+@router.get(
+    "/extraFood/{extraFoodId}/ingredients",
+    summary="Get ingredients for a specific extra food item",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_200_OK: {
+            "model": CustomResponse[list[str]],
+            "description": "List of ingredients for the extra food"
+        },
+        status.HTTP_401_UNAUTHORIZED: {
+            "model": ErrorDTO,
+            "description": "User unauthorized"
+        },
+        status.HTTP_403_FORBIDDEN: {
+            "model": ErrorDTO,
+            "description": "No authorization provided"
+        },
+        status.HTTP_404_NOT_FOUND: {
+            "model": ErrorDTO,
+            "description": "Ingredients not found for the given extra food ID"
+        },
+        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+            "model": ErrorDTO,
+            "description": "Invalid food ID format"
+        },
+    }
+)
+def get_ingredients_by_extra_food_id(extraFood_id: int) -> CustomResponse[list[FoodIngredientDTO]]:
+    ingredients = FoodController().get_ingredients_by_extra_food_id(extraFood_id)
+    if not ingredients:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No ingredients found for food with ID {extraFood_id}"
+        )
+    return CustomResponse(data=ingredients)

@@ -242,11 +242,6 @@ class ExtraFoodDTO(BaseModel):
         description="Description of the extra food item",
         max_length=512,
     )
-    ingredients: List[str] = Field(
-        ...,
-        title="Ingredients",
-        description="List of ingredients with recommended quantities and home measurements"
-    )
     image_url: Optional[str] = Field(
         None,
         title="url",
@@ -265,6 +260,11 @@ class ExtraFoodDTO(BaseModel):
         description="Desayuno, almuerzo, cena",
         max_length=64,
         min_length=1
+    )
+    ingredients: Optional[List[FoodIngredientLinkDTO]] = Field(
+        None,
+        title="Ingredients",
+        description="List of ingredient's ids used in this extra food item with their quantities"
     )
     date: datetime = Field(
         ...,

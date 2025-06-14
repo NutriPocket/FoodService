@@ -234,7 +234,6 @@ CREATE TABLE IF NOT EXISTS extra_foods (
     id_extra_food SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-    ingredients TEXT[] NOT NULL,
     image_url VARCHAR(255),
     day VARCHAR(255) NOT NULL,
     moment VARCHAR(255) NOT NULL,
@@ -248,6 +247,14 @@ CREATE TABLE IF NOT EXISTS extrafood_user_link (
     PRIMARY KEY (id_extra_food, id_user),
     FOREIGN KEY (id_extra_food) REFERENCES extra_foods(id_extra_food) ON DELETE CASCADE,
     FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+);
+
+-- Create the table 'extrafood_ingredient'
+CREATE TABLE IF NOT EXISTS extrafood_ingredient (
+    id_extra_food INT NOT NULL REFERENCES extra_foods(id_extra_food) ON DELETE CASCADE,
+    ingredient_id INT NOT NULL REFERENCES ingredients(id) ON DELETE CASCADE,
+    quantity FLOAT NOT NULL, -- en gramos o unidades según measure_type
+    PRIMARY KEY(id_extra_food, ingredient_id)
 );
 
 -- Link foods used in Plan 1 (Subir de Peso)

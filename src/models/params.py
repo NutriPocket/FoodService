@@ -31,7 +31,6 @@ class PostFoodBody(BaseModel):
     day_id: Optional[int] = Field(None, description="Optional day ID to pre-assign")
     meal_moment_id: Optional[int] = Field(None, description="Optional moment ID to pre-assign")
 
-
 class PostExtraFoodBody(BaseModel):
     extraFood: Optional[ExtraFoodDTO] = Field(
         None,

@@ -114,6 +114,14 @@ class IFoodRepository(metaclass=ABCMeta):
     def get_extra_foods(self, params: GetExtraFoodsParams) -> list[ExtraFood]:
         pass
 
+    @abstractmethod
+    def get_all_ingredients(self) -> list[Ingredient]:
+        pass
+
+    @abstractmethod
+    def get_ingredients_by_food_id(self, food_id: Optional[int], extraFoodId:Optional[int]) -> list[FoodIngredientDTO]:
+        pass
+
 class FoodRepository(IFoodRepository):
     def __init__(self, engine_: Optional[Engine] = None):
         self.engine = engine_ or engine
@@ -486,6 +494,20 @@ class FoodRepository(IFoodRepository):
                     "quantity": item.quantity
                 })
 
+    def save_extra_food_ingredients(self, extraFoodId: int, ingredients: List[FoodIngredientDTO]) -> None:
+        query = text("""
+            INSERT INTO extrafood_ingredient (id_extra_food, ingredient_id, quantity)
+            VALUES (:id_extra_food, :ingredient_id, :quantity)
+        """)
+
+        with self.engine.begin() as connection:
+            for item in ingredients:
+                connection.execute(query, {
+                    "id_extra_food": extraFoodId,
+                    "ingredient_id": item.ingredient_id,
+                    "quantity": item.quantity
+                })
+
     def link_food_to_plan(self, food_id: int, plan_id: int, day_id: Optional[int], meal_moment_id: Optional[int]) -> None:
         if day_id is None and meal_moment_id is None:
             query = text("""
@@ -602,8 +624,32 @@ class FoodRepository(IFoodRepository):
                 return None
             return dict(result._mapping)
 
-    def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
-        query = text("""
+    def get_ingredients_by_food_id(self, food_id: Optional[int], extraFoodId:Optional[int]) -> list[FoodIngredientDTO]:
+        if food_id:
+            query = text("""
+                SELECT 
+                    i.name,
+                    i.measure_type,
+                    i.calories,
+                    i.protein,
+                    i.carbs,
+                    i.fiber,
+                    i.saturated_fats,
+                    i.monounsaturated_fats,
+                    i.polyunsaturated_fats,
+                    i.trans_fats,
+                    i.cholesterol,
+                    fi.quantity
+                FROM food_ingredients fi
+                JOIN ingredients i ON fi.ingredient_id = i.id
+                WHERE fi.food_id = :food_id
+            """)
+            with engine.connect() as conn:
+                result = conn.execute(query, {"food_id": food_id})
+                rows = result.fetchall()
+
+        if extraFoodId:
+            query = text("""
             SELECT 
                 i.name,
                 i.measure_type,
@@ -616,15 +662,14 @@ class FoodRepository(IFoodRepository):
                 i.polyunsaturated_fats,
                 i.trans_fats,
                 i.cholesterol,
-                fi.quantity
-            FROM food_ingredients fi
-            JOIN ingredients i ON fi.ingredient_id = i.id
-            WHERE fi.food_id = :food_id
-        """)
-
-        with engine.connect() as conn:
-            result = conn.execute(query, {"food_id": food_id})
-            rows = result.fetchall()
+                efi.quantity
+            FROM extrafood_ingredient efi
+            JOIN ingredients i ON efi.ingredient_id = i.id
+            WHERE efi.id_extra_food = :id_extra_food
+            """)
+            with engine.connect() as conn:
+                result = conn.execute(query, {"id_extra_food": extraFoodId})
+                rows = result.fetchall()
 
         return [
             FoodIngredientDTO(
@@ -663,14 +708,13 @@ class FoodRepository(IFoodRepository):
 
     def save_extra_food(self, extraFood: ExtraFoodDTO, userId: str) -> ExtraFood:
         query = text("""
-            INSERT INTO extra_foods(name, description, ingredients, image_url, day, moment, date)
-            VALUES (:name, :description, :ingredients, :image_url, :day, :moment, :date)
-            RETURNING id_extra_food, name, description, ingredients, image_url, day, moment, date, created_at """)
+            INSERT INTO extra_foods(name, description, image_url, day, moment, date)
+            VALUES (:name, :description, :image_url, :day, :moment, :date)
+            RETURNING id_extra_food, name, description, image_url, day, moment, date, created_at """)
 
         params = {
             "name": extraFood.name,
             "description": extraFood.description,
-            "ingredients": extraFood.ingredients,
             "image_url": extraFood.image_url,
             "day": extraFood.day,
             "moment": extraFood.moment,
@@ -711,7 +755,6 @@ class FoodRepository(IFoodRepository):
                 extra_foods.id_extra_food, 
                 extra_foods.name, 
                 extra_foods.description, 
-                extra_foods.ingredients, 
                 extra_foods.image_url, 
                 extra_foods.day, 
                 extra_foods.moment, 
@@ -740,7 +783,6 @@ class FoodRepository(IFoodRepository):
                 extra_foods.id_extra_food, 
                 extra_foods.name, 
                 extra_foods.description, 
-                extra_foods.ingredients, 
                 extra_foods.image_url, 
                 extra_foods.day, 
                 extra_foods.moment, 
