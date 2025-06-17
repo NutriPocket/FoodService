@@ -14,6 +14,9 @@ $do$;
 -- Connect to the newly created database
 \c database
 
+
+SET TIMEZONE TO 'America/Argentina/Buenos_Aires';
+
 -- Create the table 'ingredients'
 CREATE TABLE ingredients (
   id SERIAL PRIMARY KEY,
@@ -256,6 +259,27 @@ CREATE TABLE IF NOT EXISTS extrafood_ingredient (
     quantity FLOAT NOT NULL, -- en gramos o unidades según measure_type
     PRIMARY KEY(id_extra_food, ingredient_id)
 );
+
+-- --------------------------------CONSUMO DE AGUA-----------------------------------
+CREATE TABLE water_consumption (
+    consumption_id SERIAL PRIMARY KEY,
+    id_user VARCHAR(36) NOT NULL,
+    consumption_date DATE NOT NULL,
+    amount_ml INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+);
+
+CREATE TABLE user_water_goals (
+    goal_id SERIAL PRIMARY KEY,
+    id_user VARCHAR(36) NOT NULL,
+    goal_ml INT NOT NULL,
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    end_date DATE, -- Puede ser NULL si es la meta actual, o una fecha si la meta ha terminado
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_user) REFERENCES users(id_user) ON DELETE CASCADE
+);
+-- ------------------------------------------------------------------------------------
 
 -- Link foods used in Plan 1 (Subir de Peso)
 -- INSERT INTO foodplanlink (food_id, plan_id, day_id, meal_moment_id, updated_at) VALUES

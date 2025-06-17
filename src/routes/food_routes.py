@@ -642,7 +642,7 @@ def search_ingredients_by_name(ingredient_search: str = Path(..., min_length=1, 
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_200_OK: {
-            "model": CustomResponse[list[str]],
+            "model": CustomResponse[list[FoodIngredientDTO]],
             "description": "List of ingredients for the extra food"
         },
         status.HTTP_401_UNAUTHORIZED: {
@@ -671,3 +671,90 @@ def get_ingredients_by_extra_food_id(extraFood_id: int) -> CustomResponse[list[F
             detail=f"No ingredients found for food with ID {extraFood_id}"
         )
     return CustomResponse(data=ingredients)
+
+@router.post("/users/{id_user}/water_consumption_goal/{water_goal}")
+def add_water_goal_to_user(id_user: str, water_goal: int):
+    query = text("""
+            SELECT id_user
+            FROM user_water_goals
+            WHERE id_user = :id_user
+            LIMIT 1
+        """)
+    insert_water_goal = text("""
+                INSERT INTO user_water_goals (id_user, goal_ml, end_date)
+                VALUES (:id_user, :goal_ml, NULL)
+            """)
+    query_update_goal = text("""
+                UPDATE user_water_goals 
+                SET end_date = CURRENT_DATE
+                WHERE id_user = :id_user AND end_date IS NULL
+            """)
+    query_search_user = text("""SELECT id_user FROM users
+            WHERE id_user = :id_user
+            LIMIT 1""")
+    params = {"id_user": id_user}
+
+    with engine.connect() as conn:
+        hasWaterGoal = conn.execute(query, params).fetchone()
+        userExists = conn.execute(query_search_user, params).fetchone()
+        _params = {"id_user": id_user, "goal_ml": water_goal}
+
+        if not userExists:
+            return {"message": "El usuario no existe"}
+
+        if hasWaterGoal:
+            try:
+                conn.execute(query_update_goal, _params)
+                conn.commit()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+    
+        try:
+            conn.execute(insert_water_goal, _params)
+            conn.commit()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+        return  {"message": "Meta de consumo de agua agregada correctamente."}
+    
+@router.post("/users/{id_user}/water_consumption/{amount_ml}/")
+def add_water_consumption_to_user(id_user: str, amount_ml: int):
+    query_user_exists = text("""SELECT id_user FROM users WHERE id_user = :id_user LIMIT 1""")
+    query_has_water_goal = text("""SELECT id_user FROM user_water_goals WHERE id_user = :id_user LIMIT 1""")
+    params = {"id_user": id_user}
+    with engine.connect() as conn:
+        userExists = conn.execute(query_user_exists, params).fetchone()
+        hasWaterGoal = conn.execute(query_has_water_goal, params).fetchone()
+        _params = {"id_user": id_user}
+
+        if not userExists:
+            return {"message": "El usuario no existe"}
+        if not hasWaterGoal:
+            return {"message": "El usuario no tiene establecida una meta en su consumo de agua"}
+        query_load_water = text("""INSERT INTO water_consumption(id_user, consumption_date, amount_ml) 
+        VALUES(:id_user, NOW(), :amount_ml)""")
+        params = {"id_user": id_user, "amount_ml": amount_ml}
+        result = conn.execute(query_load_water, params)
+        conn.commit()
+        if not result:
+                raise Exception("Error saving water consumption")
+        return {"message": "El usuario cargo su consumo de agua satisfactoriamente"}
+    
+@router.get("/users/{id_user}/water_consumption/")
+def get_water_consumption_user(id_user: str):
+    query_user_exists = text("""SELECT id_user FROM users WHERE id_user = :id_user LIMIT 1""")
+    query_has_water_goal = text("""SELECT id_user FROM user_water_goals WHERE id_user = :id_user LIMIT 1""")
+    params = {"id_user": id_user}
+    with engine.connect() as conn:
+        userExists = conn.execute(query_user_exists, params).fetchone()
+        hasWaterGoal = conn.execute(query_has_water_goal, params).fetchone()
+        if not userExists:
+            return {"message": "El usuario no existe"}
+        if not hasWaterGoal:
+            return {"message": "El usuario no tiene establecida una meta en su consumo de agua"}
+        query_get_current_goal_date = text("""SELECT goal_ml, start_date FROM user_water_goals WHERE id_user=:id_user AND end_date IS NULL LIMIT 1""")
+        result = conn.execute(query_get_current_goal_date, params).fetchone()
+        query_get_list_consumption = text("""SELECT amount_ml, consumption_date FROM water_consumption WHERE id_user=:id_user AND consumption_date >= :lastDate""")
+        amount_and_dates = conn.execute(query_get_list_consumption, {"id_user": id_user, "lastDate": result[1]}).fetchall()
+        consumptions = [{"amount_ml": row[0], "consumption_date": row[1]} for row in amount_and_dates]
+        return {"goal": {"goal_ml": result[0],},"consumptions": consumptions}
