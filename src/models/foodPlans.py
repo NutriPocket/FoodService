@@ -99,9 +99,9 @@ class MeasureType(str, Enum):
     UNIT = "unit"
 
 class IngredientDTO(BaseModel):
+    id: int = Field(..., description="Unique identifier for the ingredient")
     name: str = Field(..., max_length=64)
     measure_type: MeasureType = Field(..., description="Whether the ingredient is measured in grams or units")
-    
     calories: float = Field(..., ge=0, description="Calories per 100g or per unit")
     protein: float = Field(..., ge=0, description="Protein in grams per 100g or per unit")
     carbs: float = Field(..., ge=0, description="Carbohydrates in grams per 100g or per unit")
