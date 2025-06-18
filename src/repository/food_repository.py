@@ -769,7 +769,7 @@ class FoodRepository(IFoodRepository):
             (
                 (users.id_user = :user_id) 
                 AND 
-                (extra_foods.date > :start_date AND extra_foods.date < :end_date)
+                (extra_foods.date >= :start_date AND extra_foods.date <= :end_date)
             )
         """)
 
