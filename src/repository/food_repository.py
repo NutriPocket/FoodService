@@ -628,6 +628,7 @@ class FoodRepository(IFoodRepository):
         if food_id:
             query = text("""
                 SELECT 
+                    i.id,
                     i.name,
                     i.measure_type,
                     i.calories,
@@ -650,7 +651,8 @@ class FoodRepository(IFoodRepository):
 
         if extraFoodId:
             query = text("""
-            SELECT 
+            SELECT
+                i.id,
                 i.name,
                 i.measure_type,
                 i.calories,
@@ -674,19 +676,20 @@ class FoodRepository(IFoodRepository):
         return [
             FoodIngredientDTO(
                 ingredient=IngredientDTO(
-                    name=row[0],
-                    measure_type=MeasureType(row[1]),
-                    calories=row[2],
-                    protein=row[3],
-                    carbs=row[4],
-                    fiber=row[5],
-                    saturated_fats=row[6],
-                    monounsaturated_fats=row[7],
-                    polyunsaturated_fats=row[8],
-                    trans_fats=row[9],
-                    cholesterol=row[10]
+                    id=row[0],
+                    name=row[1],    
+                    measure_type=MeasureType(row[2]),
+                    calories=row[3],
+                    protein=row[4],
+                    carbs=row[5],
+                    fiber=row[6],
+                    saturated_fats=row[7],
+                    monounsaturated_fats=row[8],
+                    polyunsaturated_fats=row[9],
+                    trans_fats=row[10],
+                    cholesterol=row[11]
                 ),
-                quantity=row[11]
+                quantity=row[12]
             )
             for row in rows
         ]
