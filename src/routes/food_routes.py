@@ -490,7 +490,11 @@ def get_ingredients_by_food_id(food_id: int) -> CustomResponse[list[FoodIngredie
 
 @router.get("/foods/{food_id}/nutrition")
 def get_food_nutrition(food_id: int):
-    return FoodController().get_nutritional_values(food_id)
+    return FoodController().get_nutritional_values(food_id = food_id)
+
+@router.get("/extra/{extraFood_id}/nutrition")
+def get_extra_food_nutrition(extraFood_id: int):
+    return FoodController().get_nutritional_values_extrafood(extraFood_id = extraFood_id)
 
 @router.get(
     "/foods/ingredients/all",

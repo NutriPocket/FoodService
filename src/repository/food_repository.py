@@ -601,7 +601,7 @@ class FoodRepository(IFoodRepository):
 
             return Ingredient(**result._mapping)
             
-    def get_nutritional_values(self, food_id: int) -> Optional[dict]:
+    def get_nutritional_values(self, food_id: Optional[int], extraFood_id: Optional[int]) -> Optional[dict]:
         query = text("""
             SELECT 
                 SUM(i.calories * fi.quantity / 100.0) AS calories,
@@ -618,8 +618,27 @@ class FoodRepository(IFoodRepository):
             WHERE fi.food_id = :food_id
             GROUP BY fi.food_id
         """)
+        params = {"food_id": food_id}
+        if extraFood_id:
+            params = {"extraFood_id": extraFood_id}
+            query = text("""
+            SELECT 
+                SUM(i.calories * efi.quantity / 100.0) AS calories,
+                SUM(i.protein * efi.quantity / 100.0) AS protein,
+                SUM(i.carbs * efi.quantity / 100.0) AS carbs,
+                SUM(i.fiber * efi.quantity / 100.0) AS fiber,
+                SUM(i.saturated_fats * efi.quantity / 100.0) AS saturated_fats,
+                SUM(i.monounsaturated_fats * efi.quantity / 100.0) AS monounsaturated_fats,
+                SUM(i.polyunsaturated_fats * efi.quantity / 100.0) AS polyunsaturated_fats,
+                SUM(i.trans_fats * efi.quantity / 100.0) AS trans_fats,
+                SUM(i.cholesterol * efi.quantity / 100.0) AS cholesterol
+            FROM extrafood_ingredient efi
+            JOIN ingredients i ON efi.ingredient_id = i.id
+            WHERE efi.id_extra_food = :extraFood_id
+            GROUP BY efi.id_extra_food
+            """)
         with self.engine.connect() as conn:
-            result = conn.execute(query, {"food_id": food_id}).fetchone()
+            result = conn.execute(query, params).fetchone()
             if result is None:
                 return None
             return dict(result._mapping)

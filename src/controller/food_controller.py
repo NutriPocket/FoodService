@@ -109,3 +109,9 @@ class FoodController:
     
     def get_ingredients_by_extra_food_id(self, extra_food_id: int) -> list[FoodIngredientDTO]:
         return self.service.get_ingredients_by_extra_food_id(extra_food_id)
+    
+    def get_nutritional_values_extrafood(self, extraFood_id: int = Path(..., description="ID de la comida extra")) -> CustomResponse[dict]:
+        nutrition = self.service.get_food_nutritional_values_extrafood(extraFood_id)
+        if nutrition is None:
+            raise HTTPException(status_code=404, detail="extra Food not found or has no nutritional data")
+        return CustomResponse(data=nutrition)

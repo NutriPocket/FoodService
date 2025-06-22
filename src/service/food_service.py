@@ -341,7 +341,10 @@ class FoodService(IFoodService):
         return saved_ingredient
 
     def get_food_nutritional_values(self, food_id: int) -> Optional[dict]:
-        return self.repository.get_nutritional_values(food_id)
+        return self.repository.get_nutritional_values(food_id, extraFood_id=None)
+
+    def get_food_nutritional_values_extrafood(self, extra_food_id: int) -> Optional[dict]:
+        return self.repository.get_nutritional_values(food_id = None, extraFood_id=extra_food_id)
     
     def get_ingredients_by_food_id(self, food_id: int) -> list[FoodIngredientDTO]:
         return self.repository.get_ingredients_by_food_id(food_id = food_id, extraFoodId=None)
