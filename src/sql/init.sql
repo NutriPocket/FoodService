@@ -353,3 +353,53 @@ BEGIN
         (2, 4)    -- Cena
     ON CONFLICT DO NOTHING;
 END$$;
+
+-- ------------------- USER-SPECIFIC PLAN AND DATA -------------------
+-- Create a new plan for the user
+INSERT INTO plans (title, plan_description, objetive)
+VALUES ('Plan Personalizado Usuario', 'Plan personalizado para el usuario específico.', 'Mantener peso saludable');
+
+-- Link the user to the new plan (assume the new plan gets id_plan=3)
+INSERT INTO users (id_user, id_plan, updated_at)
+VALUES ('5e2ab5a6-5601-4b5c-b89c-9aa4054f90af', 3, NOW());
+
+-- Assign meals for each day of the week for the new plan
+DO $$
+DECLARE
+    day_id INTEGER;
+BEGIN
+    FOR day_id IN 1..7 LOOP
+        INSERT INTO foodplanlink (plan_id, day_id, meal_moment_id, food_id, updated_at)
+        VALUES
+            (3, day_id, 1, 6, NOW()),   -- Desayuno: Omelette de claras
+            (3, day_id, 2, 3, NOW()),   -- Almuerzo: Ensalada de pollo
+            (3, day_id, 3, 10, NOW()),  -- Merienda: Wrap integral de pavo
+            (3, day_id, 4, 4, NOW());   -- Cena: Sopa de verduras
+    END LOOP;
+    -- Populate generalized food-plan linkage
+    INSERT INTO foodplanlink_general (plan_id, food_id)
+    VALUES
+        (3, 6),   -- Desayuno
+        (3, 3),   -- Almuerzo
+        (3, 10),  -- Merienda
+        (3, 4)    -- Cena
+    ON CONFLICT DO NOTHING;
+END$$;
+
+-- Add a water goal for the user
+INSERT INTO user_water_goals (id_user, goal_ml, start_date)
+VALUES ('5e2ab5a6-5601-4b5c-b89c-9aa4054f90af', 2500, CURRENT_DATE);
+
+-- Add a water consumption record for the user
+INSERT INTO water_consumption (id_user, consumption_date, amount_ml)
+VALUES ('5e2ab5a6-5601-4b5c-b89c-9aa4054f90af', CURRENT_DATE, 500);
+
+-- Add an extra food and link it to the user
+INSERT INTO extra_foods (name, description, day, moment, date)
+VALUES ('Fruta extra', 'Manzana como snack extra.', 'Lunes', 'Merienda', CURRENT_DATE);
+
+-- Link the extra food to the user (assume the new extra_food gets id_extra_food=1)
+INSERT INTO extrafood_user_link (id_extra_food, id_user)
+VALUES (1, '5e2ab5a6-5601-4b5c-b89c-9aa4054f90af');
+-- ---------------------------------------------------------------------
+
