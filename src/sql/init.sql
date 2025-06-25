@@ -403,3 +403,23 @@ INSERT INTO extrafood_user_link (id_extra_food, id_user)
 VALUES (1, '5e2ab5a6-5601-4b5c-b89c-9aa4054f90af');
 -- ---------------------------------------------------------------------
 
+-- ------------------- USER-SPECIFIC PLAN AND DATA -------------------
+
+-- Link the user to the new plan (assume the new plan gets id_plan=3)
+INSERT INTO users (id_user, id_plan, updated_at)
+VALUES ('4d6e8f0a-3456-4h7i-e8f9-4a5b6c7d8e9f', 3, NOW());
+
+-- Add a water goal for the user
+INSERT INTO user_water_goals (id_user, goal_ml, start_date)
+VALUES ('4d6e8f0a-3456-4h7i-e8f9-4a5b6c7d8e9f', 2500, CURRENT_DATE);
+
+-- Add a water consumption record for the user
+INSERT INTO water_consumption (id_user, consumption_date, amount_ml)
+VALUES ('4d6e8f0a-3456-4h7i-e8f9-4a5b6c7d8e9f', CURRENT_DATE, 500);
+
+-- Link the extra food to the user (assume the new extra_food gets id_extra_food=1)
+INSERT INTO extrafood_user_link (id_extra_food, id_user)
+VALUES (1, '4d6e8f0a-3456-4h7i-e8f9-4a5b6c7d8e9f');
+-- ---------------------------------------------------------------------
+
+
